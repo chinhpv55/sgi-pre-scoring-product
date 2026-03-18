@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SGI — Bộ lọc sản phẩm test</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #F7F5F0; --surface: #FFFFFF; --surface2: #F0EDE6;
+    --border: #E2DDD5; --border2: #CBC5BB;
+    --text: #1A1814; --text2: #6B6560; --text3: #9E9891;
+    --accent: #1A1814;
+    --green: #2D6A4F; --green-bg: #EAF4EE;
+    --amber: #92400E; --amber-bg: #FEF3C7;
+    --red: #991B1B; --red-bg: #FEE2E2;
+    --blue: #1E40AF; --blue-bg: #EFF6FF;
+    --purple: #4C1D95; --purple-bg: #F5F3FF;
+    --mono: 'Space Mono', monospace;
+    --sans: 'Be Vietnam Pro', sans-serif;
+  }
+  body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; padding: 40px 20px; }
+  .container { max-width: 780px; margin: 0 auto; }
+  .header { margin-bottom: 40px; padding-bottom: 32px; border-bottom: 1px solid var(--border); }
+  .logo { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.15em; color: var(--text3); text-transform: uppercase; margin-bottom: 16px; }
+  .header h1 { font-size: 28px; font-weight: 600; line-height: 1.2; }
+  .header-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+  .tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 3px; border: 1px solid var(--border2); color: var(--text2); background: var(--surface); }
+  /* Nav tabs */
+  .nav-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+  .nav-tab { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--text3); background: none; border-top: none; border-left: none; border-right: none; transition: color 0.2s; }
+  .nav-tab:hover { color: var(--text2); }
+  .nav-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  /* API */
+  .api-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; margin-bottom: 24px; }
+  .api-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .api-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; transition: background 0.3s; }
+  .api-dot.on { background: var(--green); }
+  .api-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--text2); text-transform: uppercase; }
+  .api-row { display: flex; gap: 10px; }
+  .api-row input { flex: 1; font-family: var(--mono); font-size: 13px; padding: 10px 14px; border: 1px solid var(--border2); border-radius: 6px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s; }
+  .api-row input:focus { border-color: var(--accent); }
+  .btn-sm { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; padding: 10px 18px; background: var(--accent); color: #fff; border: none; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
+  .btn-sm:hover { opacity: 0.8; }
+  .api-note { font-size: 12px; color: var(--text3); margin-top: 10px; line-height: 1.5; }
+  /* Form */
+  .form-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 28px; margin-bottom: 24px; }
+  .section-mono { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); margin-bottom: 20px; }
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 7px; }
+  .field textarea, .field input { width: 100%; font-family: var(--sans); font-size: 14px; padding: 11px 14px; border: 1px solid var(--border2); border-radius: 7px; background: var(--bg); color: var(--text); outline: none; transition: border-color 0.2s, background 0.2s; resize: vertical; }
+  .field textarea:focus, .field input:focus { border-color: var(--accent); background: var(--surface); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field-hint { font-size: 12px; color: var(--text3); margin-top: 5px; }
+  .btn-run { width: 100%; font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; padding: 15px 24px; background: var(--accent); color: #fff; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s, transform 0.1s; margin-top: 4px; }
+  .btn-run:hover { opacity: 0.85; }
+  .btn-run:active { transform: scale(0.99); }
+  .btn-run:disabled { opacity: 0.4; cursor: not-allowed; }
+  /* Loading / Error */
+  .loading { display: none; text-align: center; padding: 40px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 24px; }
+  .spinner { width: 32px; height: 32px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p { font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em; color: var(--text3); }
+  .error-box { display: none; background: var(--red-bg); border: 1px solid #FCA5A5; border-radius: 8px; padding: 16px 20px; font-size: 13px; color: var(--red); margin-bottom: 24px; font-family: var(--mono); line-height: 1.5; white-space: pre-wrap; }
+  /* Result */
+  .result { display: none; }
+  .result-header { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 16px; }
+  .result-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .result-verdict-text { font-size: 18px; font-weight: 600; }
+  .verdict-badge { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; font-weight: 700; padding: 6px 14px; border-radius: 4px; flex-shrink: 0; }
+  .verdict-badge.pass { background: var(--green-bg); color: var(--green); }
+  .verdict-badge.review { background: var(--amber-bg); color: var(--amber); }
+  .verdict-badge.fail { background: var(--red-bg); color: var(--red); }
+  .score-display { display: flex; align-items: center; gap: 16px; }
+  .score-big { font-family: var(--mono); font-size: 42px; font-weight: 700; line-height: 1; flex-shrink: 0; }
+  .score-detail { flex: 1; }
+  .score-label { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  .bar-bg { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+  .layers { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .layer-row { display: flex; align-items: center; gap: 12px; }
+  .layer-tag { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; padding: 3px 8px; border-radius: 3px; width: 54px; text-align: center; flex-shrink: 0; }
+  .layer-name { font-size: 13px; color: var(--text2); width: 170px; flex-shrink: 0; }
+  .mini-bar-bg { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+  .mini-bar-fill { height: 100%; border-radius: 3px; transition: width 0.7s cubic-bezier(0.4,0,0.2,1); }
+  .layer-score { font-family: var(--mono); font-size: 12px; font-weight: 700; width: 28px; text-align: right; flex-shrink: 0; }
+  .layer-max { font-family: var(--mono); font-size: 11px; color: var(--text3); width: 28px; flex-shrink: 0; }
+  .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 24px 28px; margin-bottom: 16px; }
+  /* Margin table */
+  .margin-table { width: 100%; border-collapse: collapse; }
+  .margin-table tr { border-bottom: 1px solid var(--border); }
+  .margin-table tr:last-child { border-bottom: none; }
+  .margin-table td { padding: 9px 0; font-size: 13px; }
+  .margin-table td:first-child { color: var(--text2); }
+  .margin-table td:last-child { text-align: right; font-weight: 500; font-family: var(--mono); }
+  .margin-table .total-row td { padding-top: 14px; font-weight: 600; font-size: 14px; border-top: 2px solid var(--border2); }
+  .feasibility { border-radius: 7px; padding: 14px 18px; margin-top: 16px; font-size: 13px; line-height: 1.6; }
+  .feasibility.feasible { background: var(--green-bg); color: var(--green); border: 1px solid #A7F3D0; }
+  .feasibility.tight { background: var(--amber-bg); color: var(--amber); border: 1px solid #FDE68A; }
+  .feasibility.infeasible { background: var(--red-bg); color: var(--red); border: 1px solid #FCA5A5; }
+  .feasibility-label { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .analysis-block { margin-bottom: 18px; }
+  .analysis-block:last-child { margin-bottom: 0; }
+  .a-tag { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
+  .a-text { font-size: 14px; color: var(--text2); line-height: 1.7; }
+  .rec-text { font-size: 14px; color: var(--text); line-height: 1.8; padding: 16px 20px; background: var(--surface2); border-radius: 7px; border-left: 3px solid var(--accent); }
+  /* Save button */
+  .btn-save { width: 100%; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 12px 24px; background: transparent; color: var(--green); border: 1px solid var(--green); border-radius: 8px; cursor: pointer; transition: all 0.2s; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .btn-save:hover { background: var(--green-bg); }
+  .btn-save.saved { background: var(--green-bg); color: var(--green); border-color: var(--green); }
+  /* History tab */
+  .history-empty { text-align: center; padding: 60px 20px; color: var(--text3); font-size: 14px; }
+  .history-empty p { margin-top: 8px; font-family: var(--mono); font-size: 11px; }
+  .history-list { display: flex; flex-direction: column; gap: 12px; }
+  .history-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; cursor: pointer; transition: border-color 0.2s; }
+  .history-card:hover { border-color: var(--border2); }
+  .hc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .hc-name { font-size: 14px; font-weight: 500; line-height: 1.4; flex: 1; }
+  .hc-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .hc-score { font-family: var(--mono); font-size: 13px; font-weight: 700; }
+  .hc-date { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+  .hc-bars { display: flex; flex-direction: column; gap: 5px; }
+  .hc-bar-row { display: flex; align-items: center; gap: 8px; }
+  .hc-bar-label { font-size: 11px; color: var(--text3); width: 100px; flex-shrink: 0; }
+  .hc-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .hc-bar-fill { height: 100%; border-radius: 2px; }
+  .hc-bar-val { font-family: var(--mono); font-size: 10px; color: var(--text3); width: 28px; text-align: right; }
+  .hc-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .hc-ads { font-size: 12px; color: var(--text2); }
+  .hc-ads span { font-family: var(--mono); font-weight: 600; }
+  .btn-del { font-family: var(--mono); font-size: 10px; padding: 4px 10px; background: transparent; border: 1px solid var(--border2); border-radius: 4px; color: var(--text3); cursor: pointer; transition: all 0.15s; }
+  .btn-del:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+  .history-actions { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+  .btn-clear { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; padding: 7px 14px; background: transparent; border: 1px solid var(--border2); border-radius: 6px; color: var(--text3); cursor: pointer; transition: all 0.15s; }
+  .btn-clear:hover { border-color: var(--red); color: var(--red); }
+  /* Footer */
+  .footer { text-align: center; padding: 32px 0 0; font-family: var(--mono); font-size: 11px; color: var(--text3); letter-spacing: 0.06em; border-top: 1px solid var(--border); margin-top: 8px; }
+  @media (max-width: 560px) {
+    .field-row { grid-template-columns: 1fr; }
+    .score-big { font-size: 32px; }
+    .layer-name { width: 110px; }
+    .result-top { flex-direction: column; }
+    .hc-bar-label { width: 70px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="logo">SGI Holding — Trading Philippines</div>
+    <h1>Bộ lọc & chấm điểm<br>sản phẩm test</h1>
+    <div class="header-meta">
+      <span class="tag">3 LỚP LỌC</span>
+      <span class="tag">NGƯỠNG WIN 17%</span>
+      <span class="tag">HOÀN SGI 40%</span>
+      <span class="tag">THỊ TRƯỜNG PH</span>
+    </div>
+  </div>
+
+  <div class="api-box">
+    <div class="api-header">
+      <div class="api-dot" id="api-dot"></div>
+      <div class="api-label">Anthropic API Key</div>
+    </div>
+    <div class="api-row">
+      <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="btn-sm" onclick="saveKey()">Lưu key</button>
+    </div>
+    <div class="api-note">Key lưu tạm trong phiên, không ghi ra ngoài. Lấy tại: <strong>console.anthropic.com</strong> → API Keys → Create Key.</div>
+  </div>
+
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('evaluate')">Đánh giá SP</button>
+    <button class="nav-tab" onclick="switchTab('history')" id="tab-history">Lịch sử <span id="history-count"></span></button>
+  </div>
+
+  <!-- TAB: EVALUATE -->
+  <div class="tab-panel active" id="panel-evaluate">
+    <div class="form-card">
+      <div class="section-mono">Thông tin sản phẩm</div>
+      <div class="field">
+        <label>Tên / mô tả sản phẩm <span style="color:var(--red)">*</span></label>
+        <textarea id="sp-input" rows="3" placeholder="Ví dụ: Bếp cắt thông minh kèm ống khói + tấm lót chống đen nồi và khay hứng, đường kính 35–50cm..."></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Giá vốn (VNĐ) <span style="font-weight:400;color:var(--text3)">→ tự tính giá gợi ý</span></label>
+          <input type="number" id="cogs-vnd-input" placeholder="Ví dụ: 88000" min="0" oninput="suggestPriceFromVND(this.value)">
+          <div class="field-hint">Giá hàng TQ + ship về kho PH. Tỷ giá 425 VNĐ/₱.</div>
+        </div>
+        <div class="field">
+          <label>Giá vốn (peso PH) <span style="font-weight:400;color:var(--text3)">— tự động / sửa được</span></label>
+          <input type="number" id="cogs-input" placeholder="Tự động từ VNĐ hoặc nhập thẳng" min="0">
+          <div class="field-hint">= Giá vốn VNĐ ÷ 425. Hoặc nhập trực tiếp peso.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Giá bán dự kiến (peso PH)</label>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1">
+            <input type="number" id="price-input" placeholder="Nhập giá vốn VNĐ để hệ thống gợi ý" min="0" style="width:100%">
+            <div class="field-hint" id="price-hint">Nhập giá vốn VNĐ để hệ thống gợi ý giá bán tối thiểu theo bảng chuẩn SGI. Có thể sửa sau.</div>
+          </div>
+          <div id="price-suggest-box" style="display:none;background:var(--green-bg);border:1px solid #A7F3D0;border-radius:7px;padding:10px 14px;min-width:150px;flex-shrink:0">
+            <div style="font-family:var(--mono);font-size:10px;color:var(--green);letter-spacing:0.08em;margin-bottom:4px">GIÁ BÁN MIN</div>
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--green)" id="price-suggest-val">—</div>
+            <div style="font-size:11px;color:var(--green);margin-top:2px;line-height:1.4" id="price-suggest-sub">—</div>
+            <button onclick="applyPrice()" style="margin-top:8px;width:100%;font-family:var(--mono);font-size:10px;letter-spacing:0.06em;padding:6px;background:var(--green);color:#fff;border:none;border-radius:4px;cursor:pointer">Áp dụng ↗</button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Nguồn phát hiện (tuỳ chọn)</label>
+        <input type="text" id="source-input" placeholder="Ví dụ: Tiktok PH trending, BigSpy ads đang chạy lâu, Shopee PH best-seller...">
+      </div>
+      <button class="btn-run" id="btn-run" onclick="runScoring()">Chạy đánh giá AI →</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Đang phân tích sản phẩm...</p>
+    </div>
+
+    <div class="error-box" id="error-box"></div>
+
+    <div class="result" id="result">
+      <div class="result-header">
+        <div class="result-top">
+          <div class="result-verdict-text" id="verdict-text">—</div>
+          <div class="verdict-badge" id="verdict-badge">—</div>
+        </div>
+        <div class="score-display">
+          <div class="score-big" id="score-big">—</div>
+          <div class="score-detail">
+            <div class="score-label">Điểm tổng / 100</div>
+            <div class="bar-bg"><div class="bar-fill" id="main-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="layers">
+          <div class="layer-row">
+            <span class="layer-tag" style="background:var(--green-bg);color:var(--green)">Lớp 1</span>
+            <span class="layer-name">6 Tiêu chí vàng</span>
+            <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-l1" style="width:0%;background:#2D6A4F"></div></div>
+            <span class="layer-score" id="score-l1">—</span>
+            <span class="layer-max">/ 40</span>
+          </div>
+          <div class="layer-row">
+            <span class="layer-tag" style="background:var(--blue-bg);color:var(--blue)">Lớp 2</span>
+            <span class="layer-name">Fit thị trường PH</span>
+            <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-l2" style="width:0%;background:#1E40AF"></div></div>
+            <span class="layer-score" id="score-l2">—</span>
+            <span class="layer-max">/ 30</span>
+          </div>
+          <div class="layer-row">
+            <span class="layer-tag" style="background:var(--purple-bg);color:var(--purple)">Lớp 3</span>
+            <span class="layer-name">Tín hiệu thị trường</span>
+            <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-l3" style="width:0%;background:#4C1D95"></div></div>
+            <span class="layer-score" id="score-l3">—</span>
+            <span class="layer-max">/ 30</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-mono">Contribution margin — chi ads ≤ 17% (hoàn 40%, ship J&T 69₱, COD GIP 1.5%)</div>
+        <table class="margin-table">
+          <tr><td>Giá bán</td><td id="m-price">—</td></tr>
+          <tr><td>Giá vốn</td><td id="m-cogs">—</td></tr>
+          <tr><td>Ship J&T (69₱) + đóng gói (20₱) + COD GIP (1.5%)</td><td id="m-opex">—</td></tr>
+          <tr><td>Chi phí hoàn phân bổ / đơn thành công (40%)</td><td id="m-return">—</td></tr>
+          <tr><td>Tổng chi phí biến đổi / đơn thành công</td><td id="m-total-cost">—</td></tr>
+          <tr><td>Room còn lại cho ads</td><td id="m-ads-room">—</td></tr>
+          <tr class="total-row"><td>Chi ads tối đa / doanh thu</td><td id="m-ads-pct" style="font-size:16px">—</td></tr>
+        </table>
+        <div style="font-size:11px;color:var(--text3);margin-top:10px;padding:8px 12px;background:var(--surface2);border-radius:6px;line-height:1.6">
+          ⚠ <strong>Contribution margin</strong> — chưa gồm fixed cost DN (kho bãi, lương NV, thuế). Dùng để đánh giá pre-test. P&L đầy đủ tính riêng khi scale lên VIT Ads.
+        </div>
+        <div class="feasibility" id="feasibility-box">
+          <div class="feasibility-label" id="f-label">—</div>
+          <div id="f-note">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-mono">Phân tích chi tiết 3 lớp lọc</div>
+        <div class="analysis-block">
+          <span class="a-tag" style="background:var(--green-bg);color:var(--green)">Lớp 1 — Tiêu chí vàng</span>
+          <div class="a-text" id="a-l1">—</div>
+        </div>
+        <div class="analysis-block">
+          <span class="a-tag" style="background:var(--blue-bg);color:var(--blue)">Lớp 2 — Fit thị trường PH</span>
+          <div class="a-text" id="a-l2">—</div>
+        </div>
+        <div class="analysis-block">
+          <span class="a-tag" style="background:var(--purple-bg);color:var(--purple)">Lớp 3 — Tín hiệu thị trường</span>
+          <div class="a-text" id="a-l3">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-mono">Khuyến nghị</div>
+        <div class="rec-text" id="recommendation">—</div>
+      </div>
+
+      <button class="btn-save" id="btn-save" onclick="saveToHistory()">
+        <span>↓</span> Lưu vào lịch sử đánh giá
+      </button>
+    </div>
+  </div>
+
+  <!-- TAB: HISTORY -->
+  <div class="tab-panel" id="panel-history">
+    <div id="history-content"></div>
+  </div>
+
+  <div class="footer">SGI Holding · Trading PH · Product Scoring Tool v3.2 · Hoàn 40% · Ship J&T 69₱ · COD GIP 1.5% · WIN ≤17%</div>
+</div>
+
+<script>
+const SGI = { returnRate: 0.40, ship: 69, codFee: 0.015, pack: 20 };
+const RATE_VND_PESO = 425;
+
+// Bảng giá bán tối thiểu PH theo giá vốn VNĐ (từ bảng chuẩn Diễn)
+const PRICE_TABLE = [
+  [15000, 499], [22000, 599], [33000, 698], [45000, 798],
+  [60000, 898], [80000, 998], [90000, 1098], [100000, 1198],
+  [115000, 1298], [130000, 1398], [145000, 1498], [155000, 1598],
+  [170000, 1698], [185000, 1798], [200000, 1898], [220000, 1998],
+  [290000, 2498], [360000, 2998], [430000, 3498], [500000, 3498],
+  [600000, 3998], [800000, 5500], [1000000, 6990]
+];
+
+let suggestedPrice = null;
+
+function lookupMinPrice(cogsVnd) {
+  if (!cogsVnd || cogsVnd <= 0) return null;
+  for (let i = 0; i < PRICE_TABLE.length; i++) {
+    if (cogsVnd <= PRICE_TABLE[i][0]) return { minPeso: PRICE_TABLE[i][1], bracket: PRICE_TABLE[i][0] };
+  }
+  return { minPeso: PRICE_TABLE[PRICE_TABLE.length-1][1], bracket: PRICE_TABLE[PRICE_TABLE.length-1][0] };
+}
+
+function suggestPriceFromVND(val) {
+  const vnd = parseFloat(val);
+  if (!vnd || vnd <= 0) {
+    document.getElementById('price-suggest-box').style.display = 'none';
+    document.getElementById('cogs-input').value = '';
+    suggestedPrice = null;
+    return;
+  }
+  // Auto-fill cogs peso
+  const cogsPeso = Math.round(vnd / RATE_VND_PESO);
+  document.getElementById('cogs-input').value = cogsPeso;
+  // Lookup min price
+  const res = lookupMinPrice(vnd);
+  if (!res) return;
+  suggestedPrice = res.minPeso;
+  const box = document.getElementById('price-suggest-box');
+  box.style.display = 'block';
+  document.getElementById('price-suggest-val').textContent = res.minPeso.toLocaleString() + ' ₱';
+  document.getElementById('price-suggest-sub').textContent = 'Vốn ≤' + res.bracket.toLocaleString() + 'đ · Markup ' + (res.minPeso / cogsPeso).toFixed(1) + 'x';
+  document.getElementById('price-hint').textContent = 'Giá bán tối thiểu theo bảng chuẩn SGI. Có thể tăng lên để tăng margin.';
+}
+
+function applyPrice() {
+  if (suggestedPrice) {
+    document.getElementById('price-input').value = suggestedPrice;
+    document.getElementById('price-suggest-box').style.border = '1px solid #2D6A4F';
+    document.getElementById('price-suggest-box').style.opacity = '0.7';
+  }
+}
+let apiKey = '';
+let lastResult = null;
+
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'history') renderHistory();
+}
+
+function saveKey() {
+  const v = document.getElementById('api-key').value.trim();
+  if (!v.startsWith('sk-')) { alert('API key không hợp lệ — phải bắt đầu bằng sk-'); return; }
+  apiKey = v;
+  document.getElementById('api-dot').classList.add('on');
+  document.getElementById('api-key').value = '●'.repeat(20) + v.slice(-4);
+  document.getElementById('api-key').disabled = true;
+}
+
+function calcMargin(price, cogs) {
+  const opex = SGI.ship + SGI.pack + price * SGI.codFee;
+  const returnAlloc = SGI.returnRate * (cogs + SGI.ship) / (1 - SGI.returnRate);
+  const totalCost = cogs + opex + returnAlloc;
+  const adsRoom = price - totalCost;
+  const adsPct = (adsRoom / price) * 100;
+  return {
+    opex: Math.round(opex),
+    returnAlloc: Math.round(returnAlloc),
+    totalCost: Math.round(totalCost),
+    adsRoom: Math.round(adsRoom),
+    adsPct: Math.round(adsPct * 10) / 10
+  };
+}
+
+function saveToHistory() {
+  if (!lastResult) return;
+  const history = getHistory();
+  history.unshift(lastResult);
+  if (history.length > 100) history.pop();
+  localStorage.setItem('sgi_scoring_history', JSON.stringify(history));
+  updateHistoryCount();
+  const btn = document.getElementById('btn-save');
+  btn.classList.add('saved');
+  btn.innerHTML = '<span>✓</span> Đã lưu vào lịch sử';
+  btn.disabled = true;
+}
+
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem('sgi_scoring_history') || '[]'); }
+  catch { return []; }
+}
+
+function updateHistoryCount() {
+  const n = getHistory().length;
+  document.getElementById('history-count').textContent = n > 0 ? '(' + n + ')' : '';
+}
+
+function deleteHistory(idx) {
+  const h = getHistory();
+  h.splice(idx, 1);
+  localStorage.setItem('sgi_scoring_history', JSON.stringify(h));
+  updateHistoryCount();
+  renderHistory();
+}
+
+function clearAllHistory() {
+  if (!confirm('Xoá toàn bộ lịch sử đánh giá?')) return;
+  localStorage.removeItem('sgi_scoring_history');
+  updateHistoryCount();
+  renderHistory();
+}
+
+function renderHistory() {
+  const h = getHistory();
+  const el = document.getElementById('history-content');
+  if (h.length === 0) {
+    el.innerHTML = '<div class="history-empty"><div style="font-size:32px">📋</div><p>Chưa có đánh giá nào được lưu</p></div>';
+    return;
+  }
+  const verdictColor = { PASS: 'var(--green)', REVIEW: 'var(--amber)', FAIL: 'var(--red)' };
+  const verdictBg = { PASS: 'var(--green-bg)', REVIEW: 'var(--amber-bg)', FAIL: 'var(--red-bg)' };
+  el.innerHTML = `
+    <div class="history-actions">
+      <button class="btn-clear" onclick="clearAllHistory()">Xoá tất cả</button>
+    </div>
+    <div class="history-list">
+      ${h.map((item, i) => `
+        <div class="history-card">
+          <div class="hc-top">
+            <div class="hc-name">${item.sp}</div>
+            <div class="hc-meta">
+              <span class="hc-score" style="color:${verdictColor[item.verdict]||'var(--text)'}">${item.total}/100</span>
+              <span class="verdict-badge ${item.verdict.toLowerCase()}">${item.verdict}</span>
+            </div>
+          </div>
+          <div class="hc-bars">
+            <div class="hc-bar-row">
+              <span class="hc-bar-label">Tiêu chí vàng</span>
+              <div class="hc-bar-bg"><div class="hc-bar-fill" style="width:${(item.l1/40*100).toFixed(0)}%;background:#2D6A4F"></div></div>
+              <span class="hc-bar-val">${item.l1}/40</span>
+            </div>
+            <div class="hc-bar-row">
+              <span class="hc-bar-label">Fit thị trường PH</span>
+              <div class="hc-bar-bg"><div class="hc-bar-fill" style="width:${(item.l2/30*100).toFixed(0)}%;background:#1E40AF"></div></div>
+              <span class="hc-bar-val">${item.l2}/30</span>
+            </div>
+            <div class="hc-bar-row">
+              <span class="hc-bar-label">Tín hiệu thị trường</span>
+              <div class="hc-bar-bg"><div class="hc-bar-fill" style="width:${(item.l3/30*100).toFixed(0)}%;background:#4C1D95"></div></div>
+              <span class="hc-bar-val">${item.l3}/30</span>
+            </div>
+          </div>
+          <div class="hc-footer">
+            <div class="hc-ads">
+              Ads room: <span style="color:${item.adsPct >= 17 ? 'var(--green)' : item.adsPct >= 8 ? 'var(--amber)' : 'var(--red)'}">${item.adsPct !== null ? item.adsPct.toFixed(1)+'%' : '—'}</span>
+              ${item.price ? ' · ' + item.price + '₱ / ' + item.cogs + '₱ vốn' : ''}
+              ${item.source ? ' · ' + item.source : ''}
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="hc-date">${item.date}</span>
+              <button class="btn-del" onclick="deleteHistory(${i});event.stopPropagation()">Xoá</button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>`;
+}
+
+async function runScoring() {
+  const sp = document.getElementById('sp-input').value.trim();
+  if (!sp) { alert('Nhập mô tả sản phẩm trước nhé.'); return; }
+  if (!apiKey) { alert('Nhập và lưu API key trước nhé.'); return; }
+
+  const price = parseFloat(document.getElementById('price-input').value);
+  const cogs = parseFloat(document.getElementById('cogs-input').value);
+  const source = document.getElementById('source-input').value.trim();
+  const hasPrice = !isNaN(price) && price > 0;
+  const hasCogs = !isNaN(cogs) && cogs > 0;
+  const hasMargin = hasPrice && hasCogs;
+
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('btn-run').disabled = true;
+
+  const system = `Bạn là chuyên gia phân tích sản phẩm TMĐT thị trường Philippines cho SGI Holding — bán hàng qua Facebook Ads COD.
+
+THÔNG SỐ THỰC TẾ SGI (bắt buộc dùng):
+- Tỷ lệ hoàn: 40%
+- Ship nội địa PH: ~69 peso/đơn (J&T PH qua GIP)
+- COD fee GIP: 1.5% doanh thu
+- Đóng gói: ~20 peso/đơn
+- Tiêu chí WIN: Chi ads / Doanh thu ≤ 17%
+- Đây là contribution margin — chưa gồm fixed cost DN (kho, lương, thuế).
+
+LỚP 1 — 6 Tiêu chí vàng (tối đa 40đ). Phải đạt ÍT NHẤT 1. Đạt rõ +8đ, mờ +4đ:
+1. Đa năng đa dụng (3in1, 4in1, nhiều mục đích)
+2. Đẹp độc lạ (thị giác, thời trang, phụ kiện làm đẹp)
+3. Tính năng vượt trội (giải quyết vấn đề SP khác không làm được)
+4. Tính năng mới (cải tiến so với cùng loại trên thị trường)
+5. Hàng giá rẻ (99–399 peso, combo nhiều món, margin tốt)
+6. Trending/vụ mùa (đang hot, lễ hội, văn hoá tiêu dùng PH)
+
+LỚP 2 — Fit thị trường PH (tối đa 30đ):
+- Sức mua: thu nhập TB 15–25k peso/tháng, sweet spot 99–599 peso (0–10đ)
+- Văn hoá: wow factor, đơn giản, nhạy giá, gia dụng/làm đẹp tiện lợi (0–10đ)
+- Logistics: <2kg, không dễ vỡ, không cần bảo quản đặc biệt (0–10đ)
+
+LỚP 3 — Tín hiệu thị trường (tối đa 30đ):
+- SP tương tự bán chạy Shopee/Lazada PH (0–10đ)
+- Ads tương tự chạy lâu FB/Tiktok PH (0–10đ)
+- Cạnh tranh vừa phải — có cầu, chưa bão hoà (0–10đ)
+
+Verdict: PASS ≥65 | REVIEW 45–64 | FAIL <45. L1=0 → tự động FAIL dù tổng cao.
+
+Trả về JSON thuần, không markdown, không text thừa:
+{"score_l1":<0-40>,"score_l2":<0-30>,"score_l3":<0-30>,"total":<tổng>,"verdict":"PASS|REVIEW|FAIL","l1_detail":"<2-3 câu>","l2_detail":"<2-3 câu>","l3_detail":"<2-3 câu>","margin_est":{"price_est":<peso>,"cogs_est":<peso>,"margin_note":"<3-4 câu phân tích margin, rủi ro, gợi ý>"},"recommendation":"<3-4 câu tổng hợp>"}`;
+
+  const userMsg = `Sản phẩm: ${sp}${source ? '\nNguồn: ' + source : ''}${hasMargin ? `\nGiá bán: ${price} peso\nGiá vốn: ${cogs} peso` : '\n(Không có giá — tự ước tính theo loại SP và thị trường PH)'}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error((err?.error?.message) || 'HTTP ' + res.status + ' — kiểm tra lại API key.');
+    }
+
+    const data = await res.json();
+    const raw = data.content?.[0]?.text || '';
+    const result = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const m = result.margin_est;
+
+    const p = hasPrice ? price : (m.price_est || 0);
+    const c = hasCogs ? cogs : (m.cogs_est || 0);
+    const mg = (p > 0 && c > 0) ? calcMargin(p, c) : null;
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+
+    const total = result.total;
+    document.getElementById('score-big').textContent = total;
+    const barColor = total >= 65 ? '#2D6A4F' : total >= 45 ? '#92400E' : '#991B1B';
+    document.getElementById('main-bar').style.cssText = `width:${total}%;background:${barColor}`;
+    document.getElementById('score-l1').textContent = result.score_l1;
+    document.getElementById('score-l2').textContent = result.score_l2;
+    document.getElementById('score-l3').textContent = result.score_l3;
+    document.getElementById('bar-l1').style.width = (result.score_l1/40*100).toFixed(1)+'%';
+    document.getElementById('bar-l2').style.width = (result.score_l2/30*100).toFixed(1)+'%';
+    document.getElementById('bar-l3').style.width = (result.score_l3/30*100).toFixed(1)+'%';
+
+    const vmap = { PASS:['Đưa vào test','pass'], REVIEW:['Cân nhắc — cần review thêm','review'], FAIL:['Loại — không đưa vào test','fail'] };
+    const [vt, vc] = vmap[result.verdict] || vmap['REVIEW'];
+    document.getElementById('verdict-text').textContent = vt;
+    const vb = document.getElementById('verdict-badge');
+    vb.textContent = result.verdict; vb.className = 'verdict-badge ' + vc;
+
+    if (mg) {
+      document.getElementById('m-price').textContent = p + ' ₱';
+      document.getElementById('m-cogs').textContent = c + ' ₱';
+      document.getElementById('m-opex').textContent = '~' + mg.opex + ' ₱';
+      document.getElementById('m-return').textContent = '~' + mg.returnAlloc + ' ₱';
+      document.getElementById('m-total-cost').textContent = '~' + mg.totalCost + ' ₱';
+      document.getElementById('m-ads-room').textContent = '~' + mg.adsRoom + ' ₱';
+      const pct = mg.adsPct;
+      const pctEl = document.getElementById('m-ads-pct');
+      pctEl.textContent = pct.toFixed(1) + '%';
+      pctEl.style.color = pct >= 17 ? '#2D6A4F' : pct >= 8 ? '#92400E' : '#991B1B';
+      const feas = pct >= 17 ? 'feasible' : pct >= 8 ? 'tight' : 'infeasible';
+      const flabels = { feasible:'FEASIBLE — Khả thi đạt WIN', tight:'TIGHT — Room hẹp, cần content rất tốt', infeasible:'INFEASIBLE — Không thể đạt WIN với hoàn 40%' };
+      const fb = document.getElementById('feasibility-box');
+      fb.className = 'feasibility ' + feas;
+      document.getElementById('f-label').textContent = flabels[feas];
+      document.getElementById('f-note').textContent = m.margin_note;
+
+      lastResult = {
+        sp, source, price: hasPrice ? p : null, cogs: hasCogs ? c : null,
+        total, verdict: result.verdict, l1: result.score_l1, l2: result.score_l2, l3: result.score_l3,
+        adsPct: mg.adsPct, recommendation: result.recommendation,
+        date: new Date().toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      };
+    } else {
+      ['m-price','m-cogs','m-opex','m-return','m-total-cost','m-ads-room','m-ads-pct'].forEach(id => document.getElementById(id).textContent = '—');
+      document.getElementById('feasibility-box').className = 'feasibility tight';
+      document.getElementById('f-label').textContent = 'Không đủ dữ liệu giá';
+      document.getElementById('f-note').textContent = m.margin_note || 'Nhập giá bán và giá vốn để tính chính xác.';
+      lastResult = {
+        sp, source, price: null, cogs: null,
+        total, verdict: result.verdict, l1: result.score_l1, l2: result.score_l2, l3: result.score_l3,
+        adsPct: null, recommendation: result.recommendation,
+        date: new Date().toLocaleDateString('vi-VN', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+      };
+    }
+
+    document.getElementById('a-l1').textContent = result.l1_detail;
+    document.getElementById('a-l2').textContent = result.l2_detail;
+    document.getElementById('a-l3').textContent = result.l3_detail;
+    document.getElementById('recommendation').textContent = result.recommendation;
+
+    const saveBtn = document.getElementById('btn-save');
+    saveBtn.classList.remove('saved');
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<span>↓</span> Lưu vào lịch sử đánh giá';
+
+    document.getElementById('result').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  } catch(e) {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error-box').style.display = 'block';
+    document.getElementById('error-box').textContent = 'Lỗi: ' + e.message;
+  } finally {
+    document.getElementById('btn-run').disabled = false;
+  }
+}
+
+document.getElementById('api-key').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
+updateHistoryCount();
+</script>
+</body>
+</html>
