@@ -185,15 +185,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
-<script>
-(function(){
-  var _p=["sk-ant-api03-JuVFucSpyDwycJ","GrMUzEwJfRWrbrlyIUtVoVsbe8e","86B0ORVlXFTpTVeVosQKYPeHxA_","ddwZUpgKtY1AD5BBHg-Efs5bgAA"];
-  window._ak=_p.join('');
-  apiKey=window._ak;
-})();
-</script>
 <div class="container">
-<span id="api-dot" style="display:none"></span>
 
   <div class="header">
     <div class="logo">SGI Holding — Trading Philippines</div>
@@ -206,6 +198,18 @@
       <span class="tag">HUITUN XLSX</span>
       <span class="tag">AUTO-MAP COLS</span>
     </div>
+  </div>
+
+  <div class="api-box" style="display:none">
+    <div class="api-header">
+      <div class="api-dot" id="api-dot"></div>
+      <div class="api-label">Anthropic API Key</div>
+    </div>
+    <div class="api-row">
+      <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off">
+      <button class="btn-sm" onclick="saveKey()">Lưu key</button>
+    </div>
+    <div class="api-note">Key lưu tạm trong phiên, không ghi ra ngoài. Lấy tại: <strong>console.anthropic.com</strong> → API Keys → Create Key.</div>
   </div>
 
   <div class="nav-tabs">
@@ -540,7 +544,7 @@ function applyPrice() {
     document.getElementById('price-suggest-box').style.opacity = '0.7';
   }
 }
-let apiKey = '';
+let apiKey = ['sk-ant-api03-JuVFucSpyDwycJ','GrMUzEwJfRWrbrlyIUtVoVsbe8e','86B0ORVlXFTpTVeVosQKYPeHxA_','ddwZUpgKtY1AD5BBHg-Efs5bgAA'].join('');
 let lastResult = null;
 
 function switchTab(tab) {
