@@ -435,18 +435,12 @@
       <div style="font-size:11px;color:var(--text3);margin-top:6px" id="progress-current"></div>
     </div>
 
-    <div id="batch-results" style="display:none" class="batch-results-wrap">
+    <div id="batch-results" style="display:none">
       <div class="batch-summary" id="batch-summary"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-export" onclick="filterBatch('all')">Tất cả</button>
-          <button class="btn-export" onclick="filterBatch('PASS')">Chỉ PASS</button>
-          <button class="btn-export" onclick="filterBatch('REVIEW')">Chỉ REVIEW</button>
-        </div>
-        
-        
+      <div style="display:flex;justify-content:flex-end;margin:0 0 12px">
+        <button onclick="exportBatchXLSX()" style="font-family:var(--mono);font-size:11px;letter-spacing:.06em;padding:10px 28px;background:var(--green);color:#fff;border:none;border-radius:8px;cursor:pointer">Export Excel ↓</button>
       </div>
-      <div class="batch-table-wrap" id="batch-table-wrap"></div>
+      <div id="batch-table-wrap" style="display:none"></div>
     </div>
 
   </div>
@@ -1207,22 +1201,6 @@ function renderBatchResults(filter) {
 
 function filterBatch(f) { renderBatchResults(f); }
 
-function exportBatchCSV() {
-  const headers = ['STT','Tên SP','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
-  const rows = batchResults.map((r, i) => [
-    i+1, r.sp, r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
-    r.verdict, r.total, r.l1, r.l2, r.l3,
-    r.adsPct !== null ? r.adsPct.toFixed(1)+'%' : '',
-    r.douyinLink||'',
-    r.recommendation.replace(/,/g,' ')
-  ]);
-  const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'sgi_batch_scoring_' + new Date().toISOString().slice(0,10) + '.csv';
-  a.click(); URL.revokeObjectURL(url);
-}
 
 function exportBatchXLSX() {
   const headers = ['STT','Tên SP','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
