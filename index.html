@@ -200,7 +200,7 @@
     </div>
   </div>
 
-  <div class="api-box">
+  <div class="api-box" style="display:none">
     <div class="api-header">
       <div class="api-dot" id="api-dot"></div>
       <div class="api-label">Anthropic API Key</div>
@@ -561,7 +561,6 @@ function saveKey() {
   const v = raw.trim().replace(/^●+/, '');  // strip mask nếu đã lưu
   if (!v || v.length < 10) { alert('API key có vẻ quá ngắn — kiểm tra lại.'); return; }
   apiKey = v;
-  sessionStorage.setItem('sgi_apikey', v);
   document.getElementById('api-dot').classList.add('on');
   document.getElementById('api-key').value = '●'.repeat(20) + v.slice(-4);
   document.getElementById('api-key').disabled = true;
@@ -1290,16 +1289,7 @@ function exportBatchXLSX() {
 
 document.getElementById('api-key').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
 updateHistoryCount();
-// Auto-load key từ sessionStorage nếu đã lưu trước đó
-(function() {
-  const saved = sessionStorage.getItem('sgi_apikey');
-  if (saved) {
-    apiKey = saved;
-    document.getElementById('api-dot').classList.add('on');
-    document.getElementById('api-key').value = '●'.repeat(20) + saved.slice(-4);
-    document.getElementById('api-key').disabled = true;
-  }
-})();
+apiKey = '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';
 </script>
 </body>
 </html>
