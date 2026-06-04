@@ -182,7 +182,7 @@
   .preview-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text3); padding: 6px 10px; border-bottom: 1px solid var(--border); background: var(--surface2); position: sticky; top: 0; }
   .preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text2); }
 </style>
-<script src="xlsx.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -1055,11 +1055,6 @@ async function runBatch() {
     const qty       = !isNaN(qtyIdx)       ? (row[qtyIdx]       || '') : '';
     const douyinLink= !isNaN(linkIdx)      ? (row[linkIdx]      || '') : '';
 
-    // Update progress
-    const pct = Math.round((i / total) * 100);
-    document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-pct').textContent = pct + '%';
-    document.getElementById('progress-text').textContent = `Đang chấm: ${i+1}/${total}`;
     document.getElementById('progress-current').textContent = 'SP: ' + sp.substring(0, 60);
 
     try {
