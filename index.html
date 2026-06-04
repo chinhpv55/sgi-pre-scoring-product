@@ -200,7 +200,7 @@
     </div>
   </div>
 
-  <div class="api-box" style="display:none">
+  <div class="api-box">
     <div class="api-header">
       <div class="api-dot" id="api-dot"></div>
       <div class="api-label">Anthropic API Key</div>
@@ -368,10 +368,10 @@
       </div>
 
       <div id="preview-section" style="display:none">
-        <div class="section-mono" style="margin-bottom:12px">Bước 2 — Xem trước & map cột</div>
+        <div class="section-mono" style="margin-bottom:12px;display:none">Bước 2 — Xem trước & map cột</div>
         <div class="preview-table-wrap" id="preview-table-wrap"></div>
 
-        <div class="col-map" id="col-map-section" style="grid-template-columns:1fr 1fr">
+        <div class="col-map" id="col-map-section" style="display:none" style="grid-template-columns:1fr 1fr">
           <div>
             <label>Cột Tên sản phẩm <span style="color:var(--red)">*</span></label>
             <select id="map-name"><option value="">— chọn cột —</option></select>
@@ -406,39 +406,10 @@
           </div>
         </div>
 
-        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;padding:10px 14px;background:var(--surface2);border-radius:7px;line-height:1.6">
-          <strong style="color:var(--text2)">Huitun export:</strong> Map cột 商品名称 → Tên SP, 关联达人 → Affiliate, 佣金率 → Hoa hồng, 商品销量 → Doanh số, 商品链接 → Link.<br>
-          Cột giá vốn/giá bán để trống nếu chưa có — Lead Test sẽ bổ sung sau khi check 1688. AI vẫn chấm đủ 3 lớp dựa trên tên + Huitun signal.
-        </div>
+        
 
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 16px;margin-bottom:14px">
-          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px">Lọc thô trước khi chạy AI — giảm số SP cần score</div>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--text2)">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="filter-signal" checked style="width:14px;height:14px">
-              Chỉ SP có signal (affiliate ≥ 1 hoặc hoa hồng ≥ 10% hoặc video ≥ 10)
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="filter-digi" checked style="width:14px;height:14px">
-              Loại voucher/dịch vụ số
-            </label>
-          </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="filter-preview-count"></div>
-        </div>
-        <div style="background:var(--surface2);border-radius:8px;padding:14px 16px;margin-bottom:14px">
-          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px">Lọc thô trước khi chạy AI</div>
-          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--text2)">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="filter-signal" checked onchange="updateFilterPreview()" style="width:14px;height:14px">
-              Giữ SP có signal (affiliate ≥ 1 hoặc hoa hồng ≥ 10% hoặc video ≥ 10)
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
-              <input type="checkbox" id="filter-digi" checked onchange="updateFilterPreview()" style="width:14px;height:14px">
-              Loại voucher/dịch vụ số
-            </label>
-          </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="filter-preview-count">Upload file để xem ước tính số SP sẽ chạy</div>
-        </div>
+        
+        
         <div style="background:var(--surface2);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;white-space:nowrap">Tốc độ</div>
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
@@ -446,13 +417,10 @@
             Nhanh — 8 luồng (~5-8 phút/1000 SP)
           </label>
           <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
-            <input type="radio" name="speed" value="5" checked style="width:14px;height:14px">
+            <input type="radio" name="speed" value="5" checked checked style="width:14px;height:14px">
             Cân bằng — 5 luồng (~8-10 phút/1000 SP)
           </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
-            <input type="radio" name="speed" value="1" style="width:14px;height:14px">
-            Cũ — tuần tự (~40 phút/1000 SP)
-          </label>
+          
         </div>
         <button class="btn-run" id="btn-batch-run" onclick="runBatch()">Chạy batch AI scoring →</button>
       </div>
@@ -544,7 +512,7 @@ function applyPrice() {
     document.getElementById('price-suggest-box').style.opacity = '0.7';
   }
 }
-let apiKey = ['sk-ant-api03-JuVFucSpyDwycJ','GrMUzEwJfRWrbrlyIUtVoVsbe8e','86B0ORVlXFTpTVeVosQKYPeHxA_','ddwZUpgKtY1AD5BBHg-Efs5bgAA'].join('');
+let apiKey = '';
 let lastResult = null;
 
 function switchTab(tab) {
