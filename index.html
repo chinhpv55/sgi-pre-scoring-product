@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SGI — Bộ lọc sản phẩm test</title>
+<title>SGI — Product Scoring Tool v5.0 · Huitun</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -195,6 +195,8 @@
       <span class="tag">NGƯỠNG WIN 17%</span>
       <span class="tag">HOÀN SGI 40%</span>
       <span class="tag">THỊ TRƯỜNG PH</span>
+      <span class="tag">HUITUN XLSX</span>
+      <span class="tag">AUTO-MAP COLS</span>
     </div>
   </div>
 
@@ -211,13 +213,13 @@
   </div>
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="switchTab('evaluate')">Đánh giá SP</button>
-    <button class="nav-tab" onclick="switchTab('batch')" id="tab-batch">Batch <span id="batch-count"></span></button>
+    <button class="nav-tab active" onclick="switchTab('batch')" id="tab-batch">Batch <span id="batch-count"></span></button>
+    <button class="nav-tab" onclick="switchTab('evaluate')">SP Lẻ</button>
     <button class="nav-tab" onclick="switchTab('history')" id="tab-history">Lịch sử <span id="history-count"></span></button>
   </div>
 
   <!-- TAB: EVALUATE -->
-  <div class="tab-panel active" id="panel-evaluate">
+  <div class="tab-panel" id="panel-evaluate">
     <div class="form-card">
       <div class="section-mono">Thông tin sản phẩm</div>
       <div class="field">
@@ -352,46 +354,106 @@
 
 
   <!-- TAB: BATCH -->
-  <div class="tab-panel" id="panel-batch">
+  <div class="tab-panel active" id="panel-batch">
 
     <div class="form-card">
       <div class="section-mono">Bước 1 — Tải file sản phẩm</div>
-      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()"
+      <label class="upload-zone" id="upload-zone" for="file-input"
            ondragover="event.preventDefault();this.classList.add('drag')"
            ondragleave="this.classList.remove('drag')"
-           ondrop="handleDrop(event)">
-        <input type="file" id="file-input" accept=".csv,.xlsx,.xls" onchange="handleFile(this.files[0])">
+           ondrop="handleDropMulti(event)">
+        <input type="file" id="file-input" accept=".csv,.xlsx,.xls" multiple onchange="handleFiles(this.files)" style="display:none">
         <div class="upload-zone-title" id="upload-title">Kéo thả hoặc click để chọn file</div>
-        <div class="upload-zone-sub">Hỗ trợ: CSV · Excel (.xlsx, .xls) · tối đa 500 dòng</div>
+        <div class="upload-zone-sub">Hỗ trợ: CSV · Excel (.xlsx, .xls) · Chọn nhiều file cùng lúc (Ctrl/Cmd+click)</div>
       </div>
 
       <div id="preview-section" style="display:none">
         <div class="section-mono" style="margin-bottom:12px">Bước 2 — Xem trước & map cột</div>
         <div class="preview-table-wrap" id="preview-table-wrap"></div>
 
-        <div class="col-map" id="col-map-section">
+        <div class="col-map" id="col-map-section" style="grid-template-columns:1fr 1fr">
           <div>
             <label>Cột Tên sản phẩm <span style="color:var(--red)">*</span></label>
             <select id="map-name"><option value="">— chọn cột —</option></select>
           </div>
           <div>
+            <label>Cột Nguồn / Category</label>
+            <select id="map-source"><option value="">— chọn cột —</option></select>
+          </div>
+          <div>
+            <label>Cột Affiliate (关联达人)</label>
+            <select id="map-affiliate"><option value="">— không có —</option></select>
+          </div>
+          <div>
+            <label>Cột Hoa hồng % (佣金率)</label>
+            <select id="map-commission"><option value="">— không có —</option></select>
+          </div>
+          <div>
+            <label>Cột Doanh số (商品销量)</label>
+            <select id="map-qty"><option value="">— không có —</option></select>
+          </div>
+          <div>
+            <label>Cột Link Douyin (商品链接)</label>
+            <select id="map-link"><option value="">— không có —</option></select>
+          </div>
+          <div>
             <label>Cột Giá vốn VNĐ</label>
-            <select id="map-cogs-vnd"><option value="">— chọn cột —</option></select>
+            <select id="map-cogs-vnd"><option value="">— không có —</option></select>
           </div>
           <div>
             <label>Cột Giá bán ₱</label>
-            <select id="map-price"><option value="">— chọn cột —</option></select>
-          </div>
-          <div>
-            <label>Cột Nguồn / Ghi chú</label>
-            <select id="map-source"><option value="">— chọn cột —</option></select>
+            <select id="map-price"><option value="">— không có —</option></select>
           </div>
         </div>
 
-        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;padding:10px 14px;background:var(--surface2);border-radius:7px">
-          Nếu có cột Giá vốn VNĐ: hệ thống tự tính Giá vốn peso và Giá bán min. Nếu có sẵn Giá bán ₱: dùng luôn giá đó để tính margin.
+        <div style="font-size:12px;color:var(--text3);margin-bottom:16px;padding:10px 14px;background:var(--surface2);border-radius:7px;line-height:1.6">
+          <strong style="color:var(--text2)">Huitun export:</strong> Map cột 商品名称 → Tên SP, 关联达人 → Affiliate, 佣金率 → Hoa hồng, 商品销量 → Doanh số, 商品链接 → Link.<br>
+          Cột giá vốn/giá bán để trống nếu chưa có — Lead Test sẽ bổ sung sau khi check 1688. AI vẫn chấm đủ 3 lớp dựa trên tên + Huitun signal.
         </div>
 
+        <div style="background:var(--surface2);border-radius:8px;padding:14px 16px;margin-bottom:14px">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px">Lọc thô trước khi chạy AI — giảm số SP cần score</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--text2)">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="filter-signal" checked style="width:14px;height:14px">
+              Chỉ SP có signal (affiliate ≥ 1 hoặc hoa hồng ≥ 10% hoặc video ≥ 10)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="filter-digi" checked style="width:14px;height:14px">
+              Loại voucher/dịch vụ số
+            </label>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="filter-preview-count"></div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:14px 16px;margin-bottom:14px">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;margin-bottom:10px">Lọc thô trước khi chạy AI</div>
+          <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--text2)">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="filter-signal" checked onchange="updateFilterPreview()" style="width:14px;height:14px">
+              Giữ SP có signal (affiliate ≥ 1 hoặc hoa hồng ≥ 10% hoặc video ≥ 10)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="checkbox" id="filter-digi" checked onchange="updateFilterPreview()" style="width:14px;height:14px">
+              Loại voucher/dịch vụ số
+            </label>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px" id="filter-preview-count">Upload file để xem ước tính số SP sẽ chạy</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text3);text-transform:uppercase;white-space:nowrap">Tốc độ</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+            <input type="radio" name="speed" value="8" style="width:14px;height:14px">
+            Nhanh — 8 luồng (~5-8 phút/1000 SP)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+            <input type="radio" name="speed" value="5" checked style="width:14px;height:14px">
+            Cân bằng — 5 luồng (~8-10 phút/1000 SP)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer">
+            <input type="radio" name="speed" value="1" style="width:14px;height:14px">
+            Cũ — tuần tự (~40 phút/1000 SP)
+          </label>
+        </div>
         <button class="btn-run" id="btn-batch-run" onclick="runBatch()">Chạy batch AI scoring →</button>
       </div>
     </div>
@@ -414,6 +476,7 @@
           <button class="btn-export" onclick="filterBatch('REVIEW')">Chỉ REVIEW</button>
         </div>
         <button class="btn-export" onclick="exportBatchCSV()">Export CSV ↓</button>
+        <button class="btn-export" onclick="exportBatchXLSX()" style="background:var(--green-bg);color:var(--green);border-color:#A7F3D0">Export Excel ↓</button>
       </div>
       <div class="batch-table-wrap" id="batch-table-wrap"></div>
     </div>
@@ -425,7 +488,7 @@
     <div id="history-content"></div>
   </div>
 
-  <div class="footer">SGI Holding · Trading PH · Product Scoring Tool v4.0 · Hoàn 40% · Ship J&T 69₱ · COD GIP 1.5% · WIN ≤17%</div>
+  <div class="footer">SGI Holding · Trading PH · Product Scoring Tool v5.0 · Huitun XLSX · Hoàn 40% · Ship J&T 69₱ · COD GIP 1.5% · WIN ≤17%</div>
 </div>
 
 <script>
@@ -494,9 +557,11 @@ function switchTab(tab) {
 }
 
 function saveKey() {
-  const v = document.getElementById('api-key').value.trim();
-  if (!v.startsWith('sk-')) { alert('API key không hợp lệ — phải bắt đầu bằng sk-'); return; }
+  const raw = document.getElementById('api-key').value;
+  const v = raw.trim().replace(/^●+/, '');  // strip mask nếu đã lưu
+  if (!v || v.length < 10) { alert('API key có vẻ quá ngắn — kiểm tra lại.'); return; }
   apiKey = v;
+  sessionStorage.setItem('sgi_apikey', v);
   document.getElementById('api-dot').classList.add('on');
   document.getElementById('api-key').value = '●'.repeat(20) + v.slice(-4);
   document.getElementById('api-key').disabled = true;
@@ -667,7 +732,7 @@ Trả về JSON thuần, không markdown, không text thừa:
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] })
+      body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] })
     });
 
     if (!res.ok) {
@@ -769,110 +834,212 @@ let batchHeaders = [];
 let batchResults = [];
 let batchFilter = 'all';
 
-function handleDrop(e) {
+function handleDropMulti(e) {
   e.preventDefault();
   document.getElementById('upload-zone').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file) handleFile(file);
+  if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
 }
 
-function handleFile(file) {
-  if (!file) return;
-  document.getElementById('upload-title').textContent = file.name + ' — đang đọc...';
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'csv') {
+function handleFiles(fileList) {
+  const files = Array.from(fileList).filter(f => /\.(csv|xlsx|xls)$/i.test(f.name));
+  if (!files.length) { alert('Chỉ hỗ trợ CSV hoặc Excel (.xlsx/.xls)'); return; }
+  document.getElementById('upload-title').textContent = `Đang đọc ${files.length} file...`;
+  document.getElementById('preview-section').style.display = 'none';
+  batchHeaders = []; batchData = [];
+  let pending = files.length;
+  const allRows = [];
+  const readDone = (headers, rows, fname) => {
+    if (!batchHeaders.length) batchHeaders = headers;
+    rows.forEach(r => {
+      const mapped = batchHeaders.map((h, i) => {
+        const si = headers.findIndex(hh => hh === h);
+        return si >= 0 ? (r[si] || '') : '';
+      });
+      mapped._src = fname.replace(/\.[^.]+$/, '');
+      allRows.push(mapped);
+    });
+    if (--pending === 0) {
+      batchData = allRows;
+      const names = files.map(f => f.name.replace(/\.[^.]+$/, '')).join(' · ');
+      document.getElementById('upload-title').textContent =
+        `${files.length} file · ${allRows.length} sản phẩm  —  ${names}`;
+      document.getElementById('batch-count').textContent = '(' + allRows.length + ')';
+      showPreview();
+    }
+  };
+  files.forEach(file => {
+    const ext = file.name.split('.').pop().toLowerCase();
     const reader = new FileReader();
-    reader.onload = e => parseCSV(e.target.result);
-    reader.readAsText(file, 'UTF-8');
-  } else if (ext === 'xlsx' || ext === 'xls') {
-    const reader = new FileReader();
-    reader.onload = e => parseExcel(e.target.result);
-    reader.readAsArrayBuffer(file);
-  } else {
-    alert('Chỉ hỗ trợ CSV hoặc Excel (.xlsx/.xls)');
-  }
+    if (ext === 'csv') {
+      reader.onload = ev => {
+        const lines = ev.target.result.trim().split('\n')
+          .map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
+        if (lines.length < 2) { --pending; return; }
+        readDone(lines[0], lines.slice(1).filter(r => r.some(c => c)), file.name);
+      };
+      reader.readAsText(file, 'UTF-8');
+    } else {
+      reader.onload = ev => {
+        try {
+          const wb = XLSX.read(ev.target.result, { type: 'array' });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+          if (rows.length < 2) { --pending; return; }
+          readDone(rows[0].map(String), rows.slice(1).filter(r => r.some(c => c)), file.name);
+        } catch(ex) { alert('Lỗi đọc ' + file.name + ': ' + ex.message); --pending; }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  });
 }
 
-function parseCSV(text) {
-  const lines = text.trim().split('\n').map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
-  if (lines.length < 2) { alert('File CSV rỗng hoặc chỉ có header.'); return; }
-  batchHeaders = lines[0];
-  batchData = lines.slice(1).filter(r => r.some(c => c));
-  showPreview();
-}
-
-function parseExcel(buffer) {
-  try {
-    const wb = XLSX.read(buffer, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-    if (rows.length < 2) { alert('File Excel rỗng.'); return; }
-    batchHeaders = rows[0].map(String);
-    batchData = rows.slice(1).filter(r => r.some(c => c));
-    showPreview();
-  } catch(e) { alert('Lỗi đọc Excel: ' + e.message); }
+function autoDetectCols() {
+  const h = batchHeaders;
+  const find = (keywords) => {
+    const i = h.findIndex(col => keywords.some(k => col.toLowerCase().includes(k.toLowerCase())));
+    return i >= 0 ? i : NaN;
+  };
+  return {
+    nameIdx:       find(['商品名称','tên sp','tên sản phẩm','product name','name','title']),
+    sourceIdx:     find(['_source','类目','category','nguồn','source','ngành']),
+    affiliateIdx:  find(['关联达人','affiliate','达人']),
+    commIdx:       find(['佣金率','hoa hồng','commission','comm']),
+    qtyIdx:        find(['商品销量','销量','lượng bán','quantity','qty','doanh số']),
+    linkIdx:       find(['商品链接','link','url','链接']),
+    cogsVndIdx:    find(['giá vốn','cost vnd','cogs vnd','giá nhập']),
+    priceIdx:      find(['giá bán','price','peso','selling']),
+  };
 }
 
 function showPreview() {
-  document.getElementById('upload-title').textContent = 'File đã tải: ' + batchData.length + ' sản phẩm';
-  document.getElementById('batch-count').textContent = '(' + batchData.length + ')';
-
-  // Populate column selectors
-  const selects = ['map-name','map-cogs-vnd','map-price','map-source'];
-  selects.forEach(id => {
-    const el = document.getElementById(id);
-    el.innerHTML = '<option value="">— chọn cột —</option>';
-    batchHeaders.forEach((h, i) => {
-      el.innerHTML += `<option value="${i}">${h}</option>`;
-    });
-  });
-
-  // Auto-detect common column names
-  const autoMap = {
-    'map-name': ['tên sp','tên sản phẩm','product','product name','name','sp','sản phẩm','title'],
-    'map-cogs-vnd': ['giá vốn','giá vốn vnd','cost','cogs','vnd','giá nhập','giá vốn (vnđ)'],
-    'map-price': ['giá bán','price','giá','peso','giá bán ₱','selling price'],
-    'map-source': ['nguồn','source','ghi chú','note','notes','từ','tool']
+  const cols = autoDetectCols();
+  const colLabels = {
+    nameIdx:      '商品名称',
+    sourceIdx:    '类目 / Nguồn',
+    affiliateIdx: '关联达人',
+    commIdx:      '佣金率',
+    qtyIdx:       '商品销量',
+    linkIdx:      '商品链接',
+    cogsVndIdx:   'Giá vốn VNĐ',
+    priceIdx:     'Giá bán ₱',
   };
-  Object.entries(autoMap).forEach(([id, keywords]) => {
-    const idx = batchHeaders.findIndex(h => keywords.some(k => h.toLowerCase().includes(k)));
-    if (idx >= 0) document.getElementById(id).value = idx;
-  });
 
-  // Preview table
+  // Build tag list — cột nào nhận ra thì xanh, không có thì mờ
+  const tagHtml = Object.entries(colLabels).map(([key, label]) => {
+    const found = !isNaN(cols[key]);
+    const col = found ? batchHeaders[cols[key]] : null;
+    return found
+      ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#EAF4EE;color:#2D6A4F;border:1px solid #A7F3D0;border-radius:4px;font-family:var(--mono);font-size:10px;padding:3px 8px;margin:2px">`
+        + `<span style="opacity:.7">${label}</span> → ${col}</span>`
+      : `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);color:var(--text3);border:1px solid var(--border);border-radius:4px;font-family:var(--mono);font-size:10px;padding:3px 8px;margin:2px">`
+        + `${label} <span style="opacity:.5">— không có</span></span>`;
+  }).join('');
+
+  const nameFound = !isNaN(cols.nameIdx);
+  const statusColor = nameFound ? '#2D6A4F' : '#991B1B';
+  const statusMsg = nameFound
+    ? `✓ Tự động nhận cột — sẵn sàng chạy`
+    : `✗ Không tìm thấy cột Tên sản phẩm (商品名称) — kiểm tra lại file`;
+
+  // Preview table (5 dòng đầu, chỉ các cột quan trọng)
+  const showCols = [cols.nameIdx, cols.sourceIdx, cols.affiliateIdx, cols.commIdx, cols.qtyIdx]
+    .filter(i => !isNaN(i));
+  const showLabels = showCols.map(i => batchHeaders[i]);
   const preview = batchData.slice(0, 5);
-  let html = '<table class="preview-table"><thead><tr>';
-  batchHeaders.forEach(h => html += `<th>${h}</th>`);
-  html += '</tr></thead><tbody>';
+  let tableHtml = '<table class="preview-table"><thead><tr>';
+  showLabels.forEach(h => tableHtml += `<th>${h}</th>`);
+  tableHtml += '</tr></thead><tbody>';
   preview.forEach(row => {
-    html += '<tr>';
-    batchHeaders.forEach((_, i) => html += `<td>${row[i] || ''}</td>`);
-    html += '</tr>';
+    tableHtml += '<tr>';
+    showCols.forEach(i => tableHtml += `<td>${row[i] || ''}</td>`);
+    tableHtml += '</tr>';
   });
-  html += '</tbody></table>';
-  document.getElementById('preview-table-wrap').innerHTML = html;
+  tableHtml += '</tbody></table>';
+
+  document.getElementById('preview-table-wrap').innerHTML = tableHtml;
+
+  // Ẩn col-map, chỉ hiện status + tags + nút chạy
+  document.getElementById('col-map-section').style.display = 'none';
   document.getElementById('preview-section').style.display = 'block';
   document.getElementById('batch-results').style.display = 'none';
+
+  // Thay nội dung hint box bằng status auto-detect
+  const hintEl = document.querySelector('#preview-section > div[style*="font-size:12px"]');
+  if (hintEl) hintEl.innerHTML =
+    `<div style="font-family:var(--mono);font-size:11px;font-weight:700;color:${statusColor};margin-bottom:8px">${statusMsg}</div>`
+    + `<div style="line-height:1.8">${tagHtml}</div>`;
+
+  // Lưu cols vào window để runBatch dùng
+  window._detectedCols = cols;
+  setTimeout(updateFilterPreview, 0);
+
+  // Disable nút nếu không có cột tên
+  document.getElementById('btn-batch-run').disabled = !nameFound;
+}
+
+function updateFilterPreview() {
+  if (!batchData.length) return;
+  const cols = window._detectedCols || autoDetectCols();
+  const filterSignal = document.getElementById('filter-signal')?.checked;
+  const filterDigi   = document.getElementById('filter-digi')?.checked;
+  const digiKw = ['卡密','礼品卡','电子卡','预付卡','代金券','优惠券','课程','培训','保险','充值','话费'];
+  const filtered = batchData.filter(row => {
+    const sp = (row[cols.nameIdx] || '').toLowerCase();
+    if (!sp.trim()) return false;
+    if (filterDigi && digiKw.some(k => sp.includes(k))) return false;
+    if (filterSignal) {
+      const aff  = parseFloat(row[cols.affiliateIdx]) || 0;
+      const comm = parseFloat(String(row[cols.commIdx] || '').replace('%','')) || 0;
+      const vid  = parseFloat(row[cols.qtyIdx ? cols.qtyIdx : -1]) || 0;
+      if (aff < 1 && comm < 10 && vid < 10) return false;
+    }
+    return true;
+  });
+  const el = document.getElementById('filter-preview-count');
+  if (el) {
+    const skipped = batchData.length - filtered.length;
+    el.innerHTML = `Sau lọc: <strong style="color:var(--text)">${filtered.length}</strong> SP sẽ được chạy AI`
+      + (skipped > 0 ? ` · <span style="color:var(--text3)">${skipped} SP bị loại trước (không tốn API)</span>` : '');
+  }
 }
 
 async function runBatch() {
   if (!apiKey) { alert('Nhập và lưu API key trước.'); return; }
-  const nameIdx = parseInt(document.getElementById('map-name').value);
-  if (isNaN(nameIdx)) { alert('Chọn cột Tên sản phẩm trước.'); return; }
+  const cols = window._detectedCols || autoDetectCols();
+  const { nameIdx, sourceIdx, affiliateIdx, commIdx, qtyIdx, linkIdx, cogsVndIdx, priceIdx } = cols;
+  if (isNaN(nameIdx)) { alert('Không tìm thấy cột Tên sản phẩm — kiểm tra lại file.'); return; }
 
-  const cogsVndIdx = parseInt(document.getElementById('map-cogs-vnd').value);
-  const priceIdx = parseInt(document.getElementById('map-price').value);
-  const sourceIdx = parseInt(document.getElementById('map-source').value);
+  // Pre-filter
+  const filterSignal = document.getElementById('filter-signal')?.checked;
+  const filterDigi   = document.getElementById('filter-digi')?.checked;
+  const digiKw = ['卡密','礼品卡','电子卡','预付卡','代金券','优惠券','课程','培训','保险','充值','话费'];
+  const bigBrands = ['kerastase','卡诗','darlie','好来','dettol','滴露','libai','立白',
+    'loreal','欧莱雅','pantene','海飞丝','colgate','高露洁','dove','多芬','johnsons','强生',
+    'luckin','瑞幸','walmart','沃尔玛','联合利华','omo','奥妙','skyworth','创维'];
+  const toScore = batchData.filter(row => {
+    const sp = (row[nameIdx] || '').toLowerCase();
+    if (!sp.trim()) return false;
+    if (filterDigi && digiKw.some(k => sp.includes(k))) return false;
+    if (bigBrands.some(k => sp.includes(k))) return false;
+    if (filterSignal) {
+      const aff  = parseFloat(row[affiliateIdx]) || 0;
+      const comm = parseFloat(String(row[commIdx] || '').replace('%','')) || 0;
+      const vid  = parseFloat(row[qtyIdx >= 0 ? qtyIdx : -1]) || 0;
+      if (aff < 1 && comm < 10 && vid < 10) return false;
+    }
+    return true;
+  });
 
+  const concurrency = parseInt(document.querySelector('input[name="speed"]:checked')?.value || '8');
   batchResults = [];
   document.getElementById('btn-batch-run').disabled = true;
   document.getElementById('batch-progress').style.display = 'block';
   document.getElementById('batch-results').style.display = 'none';
 
-  const total = batchData.length;
+  const total = toScore.length;
+  let completed = 0;
 
-  for (let i = 0; i < total; i++) {
-    const row = batchData[i];
+  const scoreRow = async (row) => {
     const sp = row[nameIdx] || '';
     if (!sp.trim()) continue;
 
@@ -883,7 +1050,11 @@ async function runBatch() {
       const suggested = lookupMinPrice(cogsVnd);
       if (suggested) price = suggested.minPeso;
     }
-    const source = !isNaN(sourceIdx) ? (row[sourceIdx] || '') : '';
+    const source    = !isNaN(sourceIdx)    ? (row[sourceIdx]    || '') : '';
+    const affiliate = !isNaN(affiliateIdx) ? (row[affiliateIdx] || '') : '';
+    const commission= !isNaN(commIdx)      ? (row[commIdx]      || '') : '';
+    const qty       = !isNaN(qtyIdx)       ? (row[qtyIdx]       || '') : '';
+    const douyinLink= !isNaN(linkIdx)      ? (row[linkIdx]      || '') : '';
 
     // Update progress
     const pct = Math.round((i / total) * 100);
@@ -903,7 +1074,13 @@ PASS≥65, REVIEW 45-64, FAIL<45. L1=0→FAIL.
 Trả về JSON thuần không markdown:
 {"score_l1":0,"score_l2":0,"score_l3":0,"total":0,"verdict":"PASS|REVIEW|FAIL","recommendation":"<2 câu>","margin_est":{"price_est":0,"cogs_est":0,"margin_note":"<1 câu>"}}`;
 
-      const userMsg = `SP: ${sp}${source ? ' | Nguồn: '+source : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
+      const huitunCtx = [
+        source      ? 'Ngành: '+source : '',
+        affiliate   ? 'Affiliate Douyin: '+affiliate+' người' : '',
+        commission  ? 'Hoa hồng: '+commission : '',
+        qty         ? 'Doanh số Douyin: '+qty : '',
+      ].filter(Boolean).join(' | ');
+      const userMsg = `SP: ${sp}${huitunCtx ? ' | '+huitunCtx : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
 
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -933,9 +1110,24 @@ Trả về JSON thuần không markdown:
       batchResults.push({ sp, source, verdict: 'ERROR', total: 0, l1:0, l2:0, l3:0, adsPct: null, recommendation: 'Lỗi: '+e.message, marginNote:'' });
     }
 
-    // Small delay to avoid rate limit
-    if (i < total - 1) await new Promise(r => setTimeout(r, 800));
-  }
+    completed++;
+    const pct = Math.round((completed / total) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('progress-text').textContent = `Đã chấm: ${completed}/${total}`;
+  };
+
+  // Run with concurrency pool
+  const pool = [];
+  let idx = 0;
+  const runNext = async () => {
+    while (idx < toScore.length) {
+      const row = toScore[idx++];
+      await scoreRow(row);
+    }
+  };
+  for (let w = 0; w < concurrency; w++) pool.push(runNext());
+  await Promise.all(pool);
 
   document.getElementById('progress-fill').style.width = '100%';
   document.getElementById('progress-pct').textContent = '100%';
@@ -962,27 +1154,35 @@ function renderBatchResults(filter) {
 
   let html = `<table class="batch-table">
     <thead><tr>
-      <th>#</th><th>Sản phẩm</th><th>Giá vốn</th><th>Giá bán ₱</th>
-      <th>Verdict</th><th>Score</th><th>L1</th><th>L2</th><th>L3</th>
-      <th>Ads room%</th><th>Khuyến nghị</th>
+      <th>#</th><th>Sản phẩm</th><th>Ngành</th><th>Affiliate</th><th>Hoa hồng</th>
+      <th>Doanh số</th><th>Verdict</th><th>Score</th><th>L1</th><th>L2</th><th>L3</th>
+      <th>Ads room%</th><th>Link Douyin</th><th>Khuyến nghị</th>
     </tr></thead><tbody>`;
 
   filtered.forEach((r, i) => {
     const vc = r.verdict.toLowerCase();
     const adsPctStr = r.adsPct !== null ? r.adsPct.toFixed(1)+'%' : '—';
     const adsPctColor = r.adsPct === null ? '' : r.adsPct >= 17 ? 'color:var(--green)' : r.adsPct >= 8 ? 'color:var(--amber)' : 'color:var(--red)';
+    const affNum = parseFloat(r.affiliate);
+    const affColor = isNaN(affNum) ? '' : affNum >= 500 ? 'color:var(--green);font-weight:700' : affNum >= 50 ? 'color:var(--amber)' : '';
+    const commNum = parseFloat(String(r.commission).replace('%',''));
+    const commColor = isNaN(commNum) ? '' : commNum >= 30 ? 'color:var(--green);font-weight:700' : commNum >= 10 ? 'color:var(--amber)' : '';
+    const linkHtml = r.douyinLink ? `<a href="${r.douyinLink}" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none">Xem ↗</a>` : '—';
     html += `<tr class="${vc}">
       <td style="color:var(--text3)">${i+1}</td>
-      <td style="max-width:180px;word-break:break-word;font-weight:500">${r.sp}</td>
-      <td style="font-family:var(--mono)">${r.cogsVnd ? r.cogsVnd.toLocaleString()+'đ' : '—'}</td>
-      <td style="font-family:var(--mono)">${r.price ? r.price+'₱' : '—'}</td>
+      <td style="max-width:160px;word-break:break-word;font-weight:500">${r.sp}</td>
+      <td style="font-size:11px;color:var(--text3);max-width:80px;word-break:break-word">${r.source||'—'}</td>
+      <td style="font-family:var(--mono);${affColor}">${r.affiliate||'—'}</td>
+      <td style="font-family:var(--mono);${commColor}">${r.commission||'—'}</td>
+      <td style="font-family:var(--mono);font-size:11px">${r.qty||'—'}</td>
       <td><span class="verdict-pill ${vc}">${r.verdict}</span></td>
       <td style="font-family:var(--mono);font-weight:700">${r.total}</td>
       <td style="font-family:var(--mono)">${r.l1}</td>
       <td style="font-family:var(--mono)">${r.l2}</td>
       <td style="font-family:var(--mono)">${r.l3}</td>
       <td style="font-family:var(--mono);${adsPctColor}">${adsPctStr}</td>
-      <td style="max-width:200px;font-size:11px;color:var(--text2)">${r.recommendation}</td>
+      <td>${linkHtml}</td>
+      <td style="max-width:180px;font-size:11px;color:var(--text2)">${r.recommendation}</td>
     </tr>`;
   });
 
@@ -994,11 +1194,12 @@ function renderBatchResults(filter) {
 function filterBatch(f) { renderBatchResults(f); }
 
 function exportBatchCSV() {
-  const headers = ['STT','Tên SP','Nguồn','Giá vốn VNĐ','Giá bán ₱','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Khuyến nghị'];
+  const headers = ['STT','Tên SP','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
   const rows = batchResults.map((r, i) => [
-    i+1, r.sp, r.source||'', r.cogsVnd||'', r.price||'',
+    i+1, r.sp, r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
     r.verdict, r.total, r.l1, r.l2, r.l3,
     r.adsPct !== null ? r.adsPct.toFixed(1)+'%' : '',
+    r.douyinLink||'',
     r.recommendation.replace(/,/g,' ')
   ]);
   const csv = [headers, ...rows].map(r => r.map(c => `"${c}"`).join(',')).join('\n');
@@ -1008,10 +1209,97 @@ function exportBatchCSV() {
   a.href = url; a.download = 'sgi_batch_scoring_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click(); URL.revokeObjectURL(url);
 }
+
+function exportBatchXLSX() {
+  const headers = ['STT','Tên SP','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
+  const rows = batchResults.map((r, i) => [
+    i+1, r.sp, r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
+    r.verdict, r.total, r.l1, r.l2, r.l3,
+    r.adsPct !== null ? parseFloat(r.adsPct.toFixed(1)) : '',
+    r.douyinLink||'',
+    r.recommendation
+  ]);
+
+  const wb = XLSX.utils.book_new();
+  const wsData = [headers, ...rows];
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:4},{wch:50},{wch:18},{wch:10},{wch:9},{wch:14},
+    {wch:8},{wch:9},{wch:5},{wch:5},{wch:5},
+    {wch:9},{wch:55},{wch:45}
+  ];
+
+  // Freeze header row
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  // Color verdict cells (column G = index 6, 1-based col 7)
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = 1; R <= range.e.r; R++) {
+    const verdictCell = ws[XLSX.utils.encode_cell({r: R, c: 6})];
+    const scoreCell   = ws[XLSX.utils.encode_cell({r: R, c: 7})];
+    if (!verdictCell) continue;
+    const v = verdictCell.v;
+    const bg = v === 'PASS' ? 'EAF4EE' : v === 'REVIEW' ? 'FEF3C7' : v === 'FAIL' ? 'FEE2E2' : 'FFFFFF';
+    const fg = v === 'PASS' ? '2D6A4F' : v === 'REVIEW' ? '92400E' : v === 'FAIL' ? '991B1B' : '000000';
+    verdictCell.s = { fill:{fgColor:{rgb:bg}}, font:{bold:true,color:{rgb:fg}} };
+    if (scoreCell) scoreCell.s = { font:{bold:true,color:{rgb:fg}} };
+
+    // Color ads room% (col 10, index 11 — 0-based)
+    const adsCell = ws[XLSX.utils.encode_cell({r: R, c: 11})];
+    if (adsCell && typeof adsCell.v === 'number') {
+      const adsFg = adsCell.v >= 17 ? '2D6A4F' : adsCell.v >= 8 ? '92400E' : '991B1B';
+      adsCell.s = { font:{bold: adsCell.v >= 17, color:{rgb:adsFg}} };
+    }
+  }
+
+  // Header row style
+  for (let C = 0; C <= range.e.c; C++) {
+    const cell = ws[XLSX.utils.encode_cell({r:0, c:C})];
+    if (cell) cell.s = { fill:{fgColor:{rgb:'1A1814'}}, font:{bold:true,color:{rgb:'FFFFFF'}} };
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, 'SGI Scoring');
+
+  // Summary sheet
+  const counts = {PASS:0,REVIEW:0,FAIL:0};
+  batchResults.forEach(r => { if(counts[r.verdict]!==undefined) counts[r.verdict]++; });
+  const sumData = [
+    ['SGI Product Scoring', ''],
+    ['Tuần', new Date().toLocaleDateString('vi-VN')],
+    ['Tổng SP', batchResults.length],
+    ['PASS ≥65đ', counts.PASS],
+    ['REVIEW 45-64đ', counts.REVIEW],
+    ['FAIL <45đ', counts.FAIL],
+    ['', ''],
+    ['Tham số SGI', ''],
+    ['Tỷ lệ hoàn', '40%'],
+    ['Ship J&T', '69 ₱'],
+    ['COD GIP', '1.5%'],
+    ['Ngưỡng WIN ads room', '≥17%'],
+  ];
+  const wsSummary = XLSX.utils.aoa_to_sheet(sumData);
+  wsSummary['!cols'] = [{wch:22},{wch:18}];
+  XLSX.utils.book_append_sheet(wb, wsSummary, 'Tóm tắt');
+
+  const fname = 'SGI_Scoring_' + new Date().toISOString().slice(0,10) + '.xlsx';
+  XLSX.writeFile(wb, fname);
+}
 // ============ END BATCH ============
 
 document.getElementById('api-key').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
 updateHistoryCount();
+// Auto-load key từ sessionStorage nếu đã lưu trước đó
+(function() {
+  const saved = sessionStorage.getItem('sgi_apikey');
+  if (saved) {
+    apiKey = saved;
+    document.getElementById('api-dot').classList.add('on');
+    document.getElementById('api-key').value = '●'.repeat(20) + saved.slice(-4);
+    document.getElementById('api-key').disabled = true;
+  }
+})();
 </script>
 </body>
 </html>
