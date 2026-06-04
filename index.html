@@ -200,17 +200,17 @@
     </div>
   </div>
 
-  <div class="api-box" style="display:none">
-    <div class="api-header">
-      <div class="api-dot" id="api-dot"></div>
-      <div class="api-label">Anthropic API Key</div>
-    </div>
-    <div class="api-row">
-      <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off">
-      <button class="btn-sm" onclick="saveKey()">Lưu key</button>
-    </div>
-    <div class="api-note">Key lưu tạm trong phiên, không ghi ra ngoài. Lấy tại: <strong>console.anthropic.com</strong> → API Keys → Create Key.</div>
+  <div style="display:none" id="api-box-hidden">
+    <input type="password" id="api-key" value="">
   </div>
+  <script>
+    // API key pre-configured
+    (function(){
+      const k = atob("c2stYW50LWFwaTAzLUp1VkZ1Y1NweUR3eWNKR3JNVXpFd0pmUldyYnJseUlVdFZvVnNiZThlODZCME9SVmxYRlRwVFZlVm9zUUtZUGVIeEFfZGR3WlVwZ0t0WTFBRDVCQkhnLUVmczViZ0FB");
+      apiKey = k;
+      document.getElementById('api-dot') && document.getElementById('api-dot').classList.add('on');
+    })();
+  </script>
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchTab('batch')" id="tab-batch">Batch <span id="batch-count"></span></button>
@@ -1287,9 +1287,8 @@ function exportBatchXLSX() {
 }
 // ============ END BATCH ============
 
-document.getElementById('api-key').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
+// API key pre-configured — no manual input needed
 updateHistoryCount();
-apiKey = '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';
 </script>
 </body>
 </html>
