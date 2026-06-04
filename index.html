@@ -816,20 +816,23 @@ function handleFiles(fileList) {
   let pending = files.length;
   const allRows = [];
   const readDone = (headers, rows, fname) => {
-    if (!batchHeaders.length) batchHeaders = headers;
+    const ftype = detectFileType(headers);
+    if (!batchHeaders.length) {
+      batchHeaders = ['商品名称','类目','关联达人','佣金率','商品销量','商品链接','giá vốn','giá bán'];
+    }
     rows.forEach(r => {
-      const mapped = batchHeaders.map((h, i) => {
-        const si = headers.findIndex(hh => hh === h);
-        return si >= 0 ? (r[si] || '') : '';
-      });
-      mapped._src = fname.replace(/\.[^.]+$/, '');
+      const mapped = normalizeRow(r, headers, ftype);
+      mapped._src = fname.replace(/\.[^.]+$/, '') + (ftype==='video'?' [video]':'');
       allRows.push(mapped);
     });
     if (--pending === 0) {
       batchData = allRows;
       const names = files.map(f => f.name.replace(/\.[^.]+$/, '')).join(' · ');
+      const vCnt = allRows.filter(r=>r._src&&r._src.includes('[video]')).length;
+      const sCnt = allRows.length - vCnt;
+      const typeStr = (vCnt>0&&sCnt>0)?` (${sCnt} doanh số + ${vCnt} video)`:(vCnt>0?' [video]':'');
       document.getElementById('upload-title').textContent =
-        `${files.length} file · ${allRows.length} sản phẩm  —  ${names}`;
+        `${files.length} file · ${allRows.length} sản phẩm${typeStr}  —  ${names}`;
       document.getElementById('batch-count').textContent = '(' + allRows.length + ')';
       showPreview();
     }
@@ -858,6 +861,39 @@ function handleFiles(fileList) {
       reader.readAsArrayBuffer(file);
     }
   });
+}
+
+
+function detectFileType(headers) {
+  const h = headers.map(x => String(x));
+  if (h.some(x => x.includes('视频销量') || x.includes('佣金比例') || x.includes('抖音详情页'))) return 'video';
+  return 'sales';
+}
+
+function normalizeRow(row, headers, fileType) {
+  const get = (kws) => {
+    const i = headers.findIndex(h => kws.some(k => String(h).includes(k)));
+    return i >= 0 ? String(row[i] || '') : '';
+  };
+  if (fileType === 'video') return [
+    get(['商品名称']),
+    '视频榜',
+    '',
+    get(['佣金比例','佣金率']),
+    get(['视频销量']),
+    get(['抖音详情页','商品链接']),
+    '', ''
+  ];
+  return [
+    get(['商品名称']),
+    get(['类目','_source']),
+    get(['关联达人']),
+    get(['佣金率','佣金比例']),
+    get(['商品销量','视频销量']),
+    get(['商品链接','抖音详情页']),
+    get(['giá vốn']),
+    get(['giá bán','price'])
+  ];
 }
 
 function autoDetectCols() {
@@ -937,7 +973,10 @@ function showPreview() {
     + `<div style="line-height:1.8">${tagHtml}</div>`;
 
   // Lưu cols vào window để runBatch dùng
-  window._detectedCols = cols;
+  window._detectedCols = {
+    nameIdx:0, sourceIdx:1, affiliateIdx:2, commIdx:3,
+    qtyIdx:4, linkIdx:5, cogsVndIdx:6, priceIdx:7
+  };
   setTimeout(updateFilterPreview, 0);
 
   // Disable nút nếu không có cột tên
