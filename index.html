@@ -435,7 +435,7 @@
       <div style="font-size:11px;color:var(--text3);margin-top:6px" id="progress-current"></div>
     </div>
 
-    <div id="batch-results" style="display:none">
+    <div id="batch-results" style="display:none" class="batch-results-wrap">
       <div class="batch-summary" id="batch-summary"></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -443,8 +443,8 @@
           <button class="btn-export" onclick="filterBatch('PASS')">Chỉ PASS</button>
           <button class="btn-export" onclick="filterBatch('REVIEW')">Chỉ REVIEW</button>
         </div>
-        <button class="btn-export" onclick="exportBatchCSV()">Export CSV ↓</button>
-        <button class="btn-export" onclick="exportBatchXLSX()" style="background:var(--green-bg);color:var(--green);border-color:#A7F3D0">Export Excel ↓</button>
+        
+        
       </div>
       <div class="batch-table-wrap" id="batch-table-wrap"></div>
     </div>
