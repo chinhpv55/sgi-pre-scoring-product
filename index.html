@@ -1086,11 +1086,24 @@ Trả về JSON thuần không markdown:
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 400, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
       });
       const data = await res.json();
-      const raw = data.content?.[0]?.text || '{}';
-      const result = JSON.parse(raw.replace(/```json|```/g,'').trim());
+      const rawText = data.content?.[0]?.text || '{}';
+      let cleaned = rawText.replace(/```json|```/g,'').trim();
+      // Auto-close nếu JSON bị cắt giữa chừng
+      if (cleaned && !cleaned.endsWith('}')) {
+        const opens = (cleaned.match(/{/g)||[]).length;
+        const closes = (cleaned.match(/}/g)||[]).length;
+        for (let x=0; x<opens-closes; x++) cleaned += '}';
+      }
+      let result;
+      try { result = JSON.parse(cleaned); }
+      catch(pe) {
+        // Fallback: extract từng field bằng regex
+        const gn = (k,def) => { const m=cleaned.match(new RegExp('"'+k+'"\s*:\s*([\d.]+|"[^"]*")')); return m?(isNaN(m[1])?m[1].replace(/"/g,''):+m[1]):def; };
+        result = {score_l1:+gn('score_l1',0),score_l2:+gn('score_l2',0),score_l3:+gn('score_l3',0),total:+gn('total',0),verdict:gn('verdict','FAIL'),recommendation:gn('recommendation',''),margin_est:{price_est:+gn('price_est',0),cogs_est:+gn('cogs_est',0),margin_note:gn('margin_note','')}};
+      }
 
       const p = !isNaN(price) ? price : (result.margin_est?.price_est || 0);
       const c = !isNaN(cogsPeso) ? cogsPeso : (result.margin_est?.cogs_est || 0);
