@@ -2,8 +2,6 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SGI — Product Scoring Tool v5.0 · Huitun</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -184,7 +182,7 @@
   .preview-table th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; color: var(--text3); padding: 6px 10px; border-bottom: 1px solid var(--border); background: var(--surface2); position: sticky; top: 0; }
   .preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); color: var(--text2); }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="xlsx.js"></script>
 </head>
 <body>
 <div class="container">
@@ -202,7 +200,7 @@
     </div>
   </div>
 
-  <div class="api-box" style="display:none">
+  <div class="api-box">
     <div class="api-header">
       <div class="api-dot" id="api-dot"></div>
       <div class="api-label">Anthropic API Key</div>
@@ -546,7 +544,7 @@ function applyPrice() {
     document.getElementById('price-suggest-box').style.opacity = '0.7';
   }
 }
-let apiKey = ['sk-ant-api03-JuVFucSpyDwycJ','GrMUzEwJfRWrbrlyIUtVoVsbe8e','86B0ORVlXFTpTVeVosQKYPeHxA_','ddwZUpgKtY1AD5BBHg-Efs5bgAA'].join('');
+let apiKey = '';
 let lastResult = null;
 
 function switchTab(tab) {
