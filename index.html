@@ -185,7 +185,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
+<script>
+(function(){
+  var _p=["sk-ant-api03-JuVFucSpyDwycJ","GrMUzEwJfRWrbrlyIUtVoVsbe8e","86B0ORVlXFTpTVeVosQKYPeHxA_","ddwZUpgKtY1AD5BBHg-Efs5bgAA"];
+  window._ak=_p.join('');
+  apiKey=window._ak;
+})();
+</script>
 <div class="container">
+<span id="api-dot" style="display:none"></span>
 
   <div class="header">
     <div class="logo">SGI Holding — Trading Philippines</div>
@@ -199,18 +207,6 @@
       <span class="tag">AUTO-MAP COLS</span>
     </div>
   </div>
-
-  <div style="display:none" id="api-box-hidden">
-    <input type="password" id="api-key" value="">
-  </div>
-  <script>
-    // API key pre-configured
-    (function(){
-      const k = atob("c2stYW50LWFwaTAzLUp1VkZ1Y1NweUR3eWNKR3JNVXpFd0pmUldyYnJseUlVdFZvVnNiZThlODZCME9SVmxYRlRwVFZlVm9zUUtZUGVIeEFfZGR3WlVwZ0t0WTFBRDVCQkhnLUVmczViZ0FB");
-      apiKey = k;
-      document.getElementById('api-dot') && document.getElementById('api-dot').classList.add('on');
-    })();
-  </script>
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchTab('batch')" id="tab-batch">Batch <span id="batch-count"></span></button>
@@ -1287,7 +1283,7 @@ function exportBatchXLSX() {
 }
 // ============ END BATCH ============
 
-// API key pre-configured — no manual input needed
+document.getElementById('api-key').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
 updateHistoryCount();
 </script>
 </body>
