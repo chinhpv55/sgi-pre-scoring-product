@@ -200,17 +200,7 @@
     </div>
   </div>
 
-  <div class="api-box">
-    <div class="api-header">
-      <div class="api-dot" id="api-dot"></div>
-      <div class="api-label">Anthropic API Key</div>
-    </div>
-    <div class="api-row">
-      <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off">
-      <button class="btn-sm" onclick="saveKey()">Lưu key</button>
-    </div>
-    <div class="api-note">Key lưu tạm trong phiên, không ghi ra ngoài. Lấy tại: <strong>console.anthropic.com</strong> → API Keys → Create Key.</div>
-  </div>
+  <!-- API key được quản lý server-side qua Netlify Environment Variables -->
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="switchTab('batch')" id="tab-batch">Batch <span id="batch-count"></span></button>
@@ -506,7 +496,7 @@ function applyPrice() {
     document.getElementById('price-suggest-box').style.opacity = '0.7';
   }
 }
-let apiKey = '';
+// API key được quản lý server-side — gọi qua /api/claude proxy
 let lastResult = null;
 
 function switchTab(tab) {
@@ -518,15 +508,7 @@ function switchTab(tab) {
   if (tab === 'batch') { /* batch stays as-is */ }
 }
 
-function saveKey() {
-  const raw = document.getElementById('api-key').value;
-  const v = raw.trim().replace(/^●+/, '');  // strip mask nếu đã lưu
-  if (!v || v.length < 10) { alert('API key có vẻ quá ngắn — kiểm tra lại.'); return; }
-  apiKey = v;
-  document.getElementById('api-dot').classList.add('on');
-  document.getElementById('api-key').value = '●'.repeat(20) + v.slice(-4);
-  document.getElementById('api-key').disabled = true;
-}
+
 
 function calcMargin(price, cogs) {
   const opex = SGI.ship + SGI.pack + price * SGI.codFee;
@@ -640,7 +622,6 @@ function renderHistory() {
 async function runScoring() {
   const sp = document.getElementById('sp-input').value.trim();
   if (!sp) { alert('Nhập mô tả sản phẩm trước nhé.'); return; }
-  if (!apiKey) { alert('Nhập và lưu API key trước nhé.'); return; }
 
   const price = parseFloat(document.getElementById('price-input').value);
   const cogs = parseFloat(document.getElementById('cogs-input').value);
@@ -690,9 +671,9 @@ Trả về JSON thuần, không markdown, không text thừa:
   const userMsg = `Sản phẩm: ${sp}${source ? '\nNguồn: ' + source : ''}${hasMargin ? `\nGiá bán: ${price} peso\nGiá vốn: ${cogs} peso` : '\n(Không có giá — tự ước tính theo loại SP và thị trường PH)'}`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch('/api/claude', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] })
     });
 
@@ -1004,7 +985,6 @@ function updateFilterPreview() {
 }
 
 async function runBatch() {
-  if (!apiKey) { alert('Nhập và lưu API key trước.'); return; }
   const cols = window._detectedCols || autoDetectCols();
   const { nameIdx, sourceIdx, affiliateIdx, commIdx, qtyIdx, linkIdx, cogsVndIdx, priceIdx } = cols;
   if (isNaN(nameIdx)) { alert('Không tìm thấy cột Tên sản phẩm — kiểm tra lại file.'); return; }
@@ -1077,9 +1057,9 @@ Trả về JSON thuần không markdown:
       ].filter(Boolean).join(' | ');
       const userMsg = `SP: ${sp}${huitunCtx ? ' | '+huitunCtx : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
 
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('/api/claude', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
       });
       const data = await res.json();
@@ -1280,7 +1260,6 @@ function exportBatchXLSX() {
 }
 // ============ END BATCH ============
 
-document.getElementById('api-key').addEventListener('keydown', e => { if (e.key === 'Enter') saveKey(); });
 updateHistoryCount();
 </script>
 </body>
