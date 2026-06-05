@@ -412,6 +412,12 @@
           </label>
           
         </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+          <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text2);cursor:pointer;user-select:none">
+            <input type="checkbox" id="bypass-history" style="width:14px;height:14px;cursor:pointer">
+            Bỏ qua lịch sử (chạy lại tất cả)
+          </label>
+        </div>
         <button class="btn-run" id="btn-batch-run" onclick="runBatch()">Chạy batch AI scoring →</button>
       </div>
     </div>
@@ -567,7 +573,9 @@ function renderHistory() {
   const h = getHistory();
   const el = document.getElementById('history-content');
   if (h.length === 0) {
-    el.innerHTML = '<div class="history-empty"><div style="font-size:32px">📋</div><p>Chưa có đánh giá nào được lưu</p></div>';
+    el.innerHTML = '<div style="display:flex;justify-content:flex-end;margin-bottom:12px">'
+      + '<button class="btn-clear" onclick="clearAllHistory()">Xoá tất cả</button></div>'
+      + '<div class="history-empty"><div style="font-size:32px">📋</div><p>Chưa có đánh giá nào được lưu</p></div>';
     return;
   }
   const verdictColor = { PASS: 'var(--green)', REVIEW: 'var(--amber)', FAIL: 'var(--red)' };
@@ -1063,8 +1071,9 @@ async function runBatch() {
   });
 
   // DEDUP: So sánh với lịch sử — skip SP đã có kết quả gần đây
+  const bypassHistory = document.getElementById('bypass-history')?.checked;
   const skipWeeks = { PASS: 4, FAIL: 2, REVIEW: 0, PASS_REJECTED: 3 };
-  const historyMap = buildHistoryMap();
+  const historyMap = bypassHistory ? {} : buildHistoryMap();
   const now = Date.now();
   const toScoreFinal = [];
   const skippedResults = [];
