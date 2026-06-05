@@ -1255,9 +1255,9 @@ function renderBatchResults(filter) {
 
   let html = `<table class="batch-table">
     <thead><tr>
-      <th>#</th><th>Sản phẩm (TQ)</th><th>Tên VN</th><th>Ngành</th><th>Affiliate</th><th>Hoa hồng</th>
-      <th>Doanh số</th><th>Verdict</th><th>Score</th><th>L1</th><th>L2</th><th>L3</th>
-      <th>Ads room%</th><th>Link</th><th>Khuyến nghị</th>
+      <th>#</th><th>Tên SP (TQ)</th><th>Tên SP (VN)</th><th>Ngành</th><th>KOC (người)</th><th>Hoa hồng</th>
+      <th>DS Douyin (Tệ)</th><th>Verdict</th><th>Score</th><th>L1</th><th>L2</th><th>L3</th>
+      <th>Ads room% ≥17</th><th>Link</th><th>Khuyến nghị</th>
     </tr></thead><tbody>`;
 
   filtered.forEach((r, i) => {
@@ -1299,7 +1299,7 @@ function filterBatch(f) { renderBatchResults(f); }
 
 
 function exportBatchXLSX() {
-  const headers = ['STT','Tên SP (TQ)','Tên VN','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
+  const headers = ['STT','Tên SP (TQ)','Tên SP (VN)','Ngành','KOC Affiliate (người)','Hoa hồng (%)','Doanh số Douyin (Tệ)','Verdict','Tổng điểm','L1','L2','L3','Ads room% (WIN≥17%)','Link Douyin','Khuyến nghị'];
   const rows = batchResults.map((r, i) => [
     i+1, r.sp, r.nameVi||'', r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
     r.verdict, r.total, r.l1, r.l2, r.l3,
