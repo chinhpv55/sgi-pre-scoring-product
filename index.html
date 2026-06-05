@@ -883,7 +883,7 @@ function autoDetectCols() {
     affiliateIdx:  find(['关联达人','affiliate','达人']),
     commIdx:       find(['佣金率','hoa hồng','commission','comm']),
     qtyIdx:        find(['商品销量','销量','lượng bán','quantity','qty','doanh số']),
-    linkIdx:       find(['商品链接','link','url','链接']),
+    linkIdx:       find(['商品链接','抖音详情页','link','url','链接']),
     cogsVndIdx:    find(['giá vốn','cost vnd','cogs vnd','giá nhập']),
     priceIdx:      find(['giá bán','price','peso','selling']),
   };
@@ -1137,7 +1137,7 @@ VERDICT: PASS≥65, REVIEW 45-64, FAIL<45. Nếu L1=0 → tự động FAIL dù 
 total = score_l1 + score_l2 + score_l3 (tính đúng, không để 0 nếu các thành phần > 0).
 
 Trả về JSON thuần không markdown, không text thừa:
-{"score_l1":0,"score_l2":0,"score_l3":0,"total":0,"verdict":"PASS|REVIEW|FAIL","recommendation":"<2 câu ngắn gọn>","margin_est":{"price_est":0,"cogs_est":0,"margin_note":"<1 câu>"}}`;
+{"score_l1":0,"score_l2":0,"score_l3":0,"total":0,"verdict":"PASS|REVIEW|FAIL","name_vi":"<tên sản phẩm tiếng Việt ngắn gọn 5-10 từ>","recommendation":"<2 câu ngắn gọn>","margin_est":{"price_est":0,"cogs_est":0,"margin_note":"<1 câu>"}}`;
 
       const huitunCtx = [
         source      ? 'Ngành: '+source : '',
@@ -1181,8 +1181,10 @@ Trả về JSON thuần không markdown, không text thừa:
         total: result.total || 0,
         l1: result.score_l1 || 0, l2: result.score_l2 || 0, l3: result.score_l3 || 0,
         adsPct: mg ? mg.adsPct : null,
+        nameVi: result.name_vi || '',
         recommendation: result.recommendation || '',
-        marginNote: result.margin_est?.margin_note || ''
+        marginNote: result.margin_est?.margin_note || '',
+        affiliate, commission, qty, douyinLink
       });
     } catch(e) {
       batchResults.push({ sp, source, verdict: 'ERROR', total: 0, l1:0, l2:0, l3:0, adsPct: null, recommendation: 'Lỗi: '+e.message, marginNote:'' });
@@ -1242,9 +1244,9 @@ function renderBatchResults(filter) {
 
   let html = `<table class="batch-table">
     <thead><tr>
-      <th>#</th><th>Sản phẩm</th><th>Ngành</th><th>Affiliate</th><th>Hoa hồng</th>
+      <th>#</th><th>Sản phẩm (TQ)</th><th>Tên VN</th><th>Ngành</th><th>Affiliate</th><th>Hoa hồng</th>
       <th>Doanh số</th><th>Verdict</th><th>Score</th><th>L1</th><th>L2</th><th>L3</th>
-      <th>Ads room%</th><th>Link Douyin</th><th>Khuyến nghị</th>
+      <th>Ads room%</th><th>Link</th><th>Khuyến nghị</th>
     </tr></thead><tbody>`;
 
   filtered.forEach((r, i) => {
@@ -1260,7 +1262,8 @@ function renderBatchResults(filter) {
     const linkHtml = r.douyinLink ? `<a href="${r.douyinLink}" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none">Xem ↗</a>` : '—';
     html += `<tr class="${vc}" style="${skippedStyle}">
       <td style="color:var(--text3)">${i+1}</td>
-      <td style="max-width:160px;word-break:break-word;font-weight:500">${r.sp}${skippedTag}</td>
+      <td style="max-width:140px;word-break:break-word;font-weight:500;font-size:11px">${r.sp}${skippedTag}</td>
+      <td style="max-width:120px;word-break:break-word;font-size:12px;color:var(--text)">${r.nameVi||'—'}</td>
       <td style="font-size:11px;color:var(--text3);max-width:80px;word-break:break-word">${r.source||'—'}</td>
       <td style="font-family:var(--mono);${affColor}">${r.affiliate||'—'}</td>
       <td style="font-family:var(--mono);${commColor}">${r.commission||'—'}</td>
@@ -1285,9 +1288,9 @@ function filterBatch(f) { renderBatchResults(f); }
 
 
 function exportBatchXLSX() {
-  const headers = ['STT','Tên SP','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
+  const headers = ['STT','Tên SP (TQ)','Tên VN','Ngành','Affiliate','Hoa hồng','Doanh số Douyin','Verdict','Tổng điểm','L1','L2','L3','Ads room%','Link Douyin','Khuyến nghị'];
   const rows = batchResults.map((r, i) => [
-    i+1, r.sp, r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
+    i+1, r.sp, r.nameVi||'', r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
     r.verdict, r.total, r.l1, r.l2, r.l3,
     r.adsPct !== null ? parseFloat(r.adsPct.toFixed(1)) : '',
     r.douyinLink||'',
@@ -1300,7 +1303,7 @@ function exportBatchXLSX() {
 
   // Column widths
   ws['!cols'] = [
-    {wch:4},{wch:50},{wch:18},{wch:10},{wch:9},{wch:14},
+    {wch:4},{wch:45},{wch:30},{wch:18},{wch:10},{wch:9},{wch:14},
     {wch:8},{wch:9},{wch:5},{wch:5},{wch:5},
     {wch:9},{wch:55},{wch:45}
   ];
@@ -1311,8 +1314,8 @@ function exportBatchXLSX() {
   // Color verdict cells (column G = index 6, 1-based col 7)
   const range = XLSX.utils.decode_range(ws['!ref']);
   for (let R = 1; R <= range.e.r; R++) {
-    const verdictCell = ws[XLSX.utils.encode_cell({r: R, c: 6})];
-    const scoreCell   = ws[XLSX.utils.encode_cell({r: R, c: 7})];
+    const verdictCell = ws[XLSX.utils.encode_cell({r: R, c: 7})];
+    const scoreCell   = ws[XLSX.utils.encode_cell({r: R, c: 8})];
     if (!verdictCell) continue;
     const v = verdictCell.v;
     const bg = v === 'PASS' ? 'EAF4EE' : v === 'REVIEW' ? 'FEF3C7' : v === 'FAIL' ? 'FEE2E2' : 'FFFFFF';
@@ -1321,7 +1324,7 @@ function exportBatchXLSX() {
     if (scoreCell) scoreCell.s = { font:{bold:true,color:{rgb:fg}} };
 
     // Color ads room% (col 10, index 11 — 0-based)
-    const adsCell = ws[XLSX.utils.encode_cell({r: R, c: 11})];
+    const adsCell = ws[XLSX.utils.encode_cell({r: R, c: 12})];
     if (adsCell && typeof adsCell.v === 'number') {
       const adsFg = adsCell.v >= 17 ? '2D6A4F' : adsCell.v >= 8 ? '92400E' : '991B1B';
       adsCell.s = { font:{bold: adsCell.v >= 17, color:{rgb:adsFg}} };
