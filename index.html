@@ -1237,7 +1237,7 @@ function renderBatchResults(filter) {
     <div class="summary-card"><div class="summary-num" style="color:var(--green)">${counts.PASS||0}</div><div class="summary-label">PASS</div></div>
     <div class="summary-card"><div class="summary-num" style="color:var(--amber)">${counts.REVIEW||0}</div><div class="summary-label">REVIEW</div></div>
     <div class="summary-card"><div class="summary-num" style="color:var(--red)">${counts.FAIL||0}</div><div class="summary-label">FAIL</div></div>
-    ${skippedCount > 0 ? \`<div class="summary-card"><div class="summary-num" style="color:var(--text3)">\${skippedCount}</div><div class="summary-label">Từ lịch sử</div></div>\` : ''}
+    ${skippedCount > 0 ? '<div class="summary-card"><div class="summary-num" style="color:var(--text3)">'+skippedCount+'</div><div class="summary-label">Từ lịch sử</div></div>' : ''}
   `;
 
   let html = `<table class="batch-table">
