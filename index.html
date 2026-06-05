@@ -1145,14 +1145,16 @@ Trả về JSON thuần không markdown, không text thừa:
         commission  ? 'Hoa hồng: '+commission : '',
         qty         ? 'Doanh số Douyin: '+qty : '',
       ].filter(Boolean).join(' | ');
-      const userMsg = `SP: ${sp}${huitunCtx ? ' | '+huitunCtx : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
+      const spShort = sp.length > 120 ? sp.substring(0, 120) : sp;
+      const userMsg = `SP: ${spShort}${huitunCtx ? ' | '+huitunCtx : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
 
       const res = await fetch('/api/claude', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 600, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
+        body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 900, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
       });
       const data = await res.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
       const rawText = data.content?.[0]?.text || '{}';
       let cleaned = rawText.replace(/```json|```/g,'').trim();
       // Auto-close nếu JSON bị cắt giữa chừng
@@ -1166,7 +1168,7 @@ Trả về JSON thuần không markdown, không text thừa:
       catch(pe) {
         // Fallback: extract từng field bằng regex
         const gn = (k,def) => { const m=cleaned.match(new RegExp('"'+k+'"\s*:\s*([\d.]+|"[^"]*")')); return m?(isNaN(m[1])?m[1].replace(/"/g,''):+m[1]):def; };
-        result = {score_l1:+gn('score_l1',0),score_l2:+gn('score_l2',0),score_l3:+gn('score_l3',0),total:+gn('total',0),verdict:gn('verdict','FAIL'),recommendation:gn('recommendation',''),margin_est:{price_est:+gn('price_est',0),cogs_est:+gn('cogs_est',0),margin_note:gn('margin_note','')}};
+        result = {score_l1:+gn('score_l1',0),score_l2:+gn('score_l2',0),score_l3:+gn('score_l3',0),total:+gn('total',0),verdict:gn('verdict','FAIL'),name_vi:gn('name_vi',''),recommendation:gn('recommendation',''),margin_est:{price_est:+gn('price_est',0),cogs_est:+gn('cogs_est',0),margin_note:gn('margin_note','')}};
       }
 
       const p = !isNaN(price) ? price : (result.margin_est?.price_est || 0);
