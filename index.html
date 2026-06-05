@@ -984,6 +984,58 @@ function updateFilterPreview() {
   }
 }
 
+// ===== DEDUP HISTORY HELPERS =====
+function normalizeSpName(sp) {
+  return sp.toLowerCase().replace(/[【】\[\]()（）\s「」『』《》""'']/g, '').trim().substring(0, 80);
+}
+
+function buildHistoryMap() {
+  const h = getHistory();
+  const map = {};
+  h.forEach(item => {
+    const key = normalizeSpName(item.sp || '');
+    if (key && !map[key]) {
+      map[key] = {
+        verdict: item.verdict || 'FAIL',
+        total: item.total || 0,
+        l1: item.l1 || 0, l2: item.l2 || 0, l3: item.l3 || 0,
+        adsPct: item.adsPct || null,
+        recommendation: item.recommendation || '',
+        marginNote: item.marginNote || '',
+        source: item.source || '',
+        ts: item.ts || 0,
+        date: item.date || ''
+      };
+    }
+  });
+  return map;
+}
+
+function saveBatchToHistory(results) {
+  const existing = getHistory();
+  const existingMap = {};
+  existing.forEach((item, i) => {
+    const key = normalizeSpName(item.sp || '');
+    existingMap[key] = i;
+  });
+  const now = Date.now();
+  results.forEach(r => {
+    if (!r.sp || r.verdict === 'ERROR') return;
+    const key = normalizeSpName(r.sp);
+    const entry = { ...r, ts: now, date: new Date().toLocaleDateString('vi-VN', {day:'2-digit',month:'2-digit',year:'numeric'}) };
+    if (existingMap[key] !== undefined) {
+      existing[existingMap[key]] = entry; // cập nhật
+    } else {
+      existing.unshift(entry); // thêm mới
+    }
+  });
+  // Giữ tối đa 2000 SP trong history
+  const trimmed = existing.slice(0, 2000);
+  localStorage.setItem('sgi_scoring_history', JSON.stringify(trimmed));
+  updateHistoryCount();
+}
+// ===== END DEDUP HELPERS =====
+
 async function runBatch() {
   const cols = window._detectedCols || autoDetectCols();
   const { nameIdx, sourceIdx, affiliateIdx, commIdx, qtyIdx, linkIdx, cogsVndIdx, priceIdx } = cols;
@@ -1010,13 +1062,38 @@ async function runBatch() {
     return true;
   });
 
+  // DEDUP: So sánh với lịch sử — skip SP đã có kết quả gần đây
+  const skipWeeks = { PASS: 4, FAIL: 2, REVIEW: 0, PASS_REJECTED: 3 };
+  const historyMap = buildHistoryMap();
+  const now = Date.now();
+  const toScoreFinal = [];
+  const skippedResults = [];
+  toScore.forEach(row => {
+    const sp = (row[nameIdx] || '').trim();
+    const hist = historyMap[normalizeSpName(sp)];
+    if (hist) {
+      const weeksAgo = (now - hist.ts) / (1000 * 60 * 60 * 24 * 7);
+      const skipW = skipWeeks[hist.verdict] ?? 0;
+      if (skipW > 0 && weeksAgo < skipW) {
+        skippedResults.push({ ...hist, sp, _skipped: true, _weeksAgo: weeksAgo.toFixed(1) });
+        return;
+      }
+    }
+    toScoreFinal.push(row);
+  });
+
   const concurrency = parseInt(document.querySelector('input[name="speed"]:checked')?.value || '8');
   batchResults = [];
   document.getElementById('btn-batch-run').disabled = true;
   document.getElementById('batch-progress').style.display = 'block';
   document.getElementById('batch-results').style.display = 'none';
 
-  const total = toScore.length;
+  if (skippedResults.length > 0) {
+    document.getElementById('progress-current').textContent =
+      `Dedup: bỏ qua ${skippedResults.length} SP đã có lịch sử, chạy ${toScoreFinal.length} SP mới`;
+  }
+
+  const total = toScoreFinal.length;
   let completed = 0;
 
   const scoreRow = async (row) => {
@@ -1040,14 +1117,27 @@ async function runBatch() {
 
     try {
       const systemPrompt = `Bạn là chuyên gia phân tích sản phẩm TMĐT thị trường Philippines cho SGI Holding — bán hàng qua Facebook Ads COD.
-THÔNG SỐ SGI: hoàn 40%, ship J&T 69₱/đơn, COD GIP 1.5%, đóng gói 20₱.
-Tiêu chí WIN: Chi ads/Doanh thu ≤ 17%.
-LỚP 1 — 6 Tiêu chí vàng (tối đa 40đ, phải đạt ≥1): Đa năng(+8), Đẹp độc lạ(+8), Vượt trội(+8), Tính năng mới(+8), Giá rẻ 99-399₱(+8), Trending(+8). Mờ +4đ.
-LỚP 2 — Fit PH (30đ): Sức mua 0-10, Văn hoá 0-10, Logistics 0-10.
-LỚP 3 — Tín hiệu (30đ): Shopee/Lazada PH 0-10, Ads FB/Tiktok PH 0-10, Cạnh tranh 0-10.
-PASS≥65, REVIEW 45-64, FAIL<45. L1=0→FAIL.
-Trả về JSON thuần không markdown:
-{"score_l1":0,"score_l2":0,"score_l3":0,"total":0,"verdict":"PASS|REVIEW|FAIL","recommendation":"<2 câu>","margin_est":{"price_est":0,"cogs_est":0,"margin_note":"<1 câu>"}}`;
+
+CONTEXT QUAN TRỌNG: Dữ liệu đầu vào là sản phẩm trending trên Douyin/TikTok Trung Quốc. Nhiệm vụ là đánh giá xem LOẠI SẢN PHẨM này có tiềm năng bán qua Facebook Ads COD tại Philippines không — KHÔNG phải đánh giá thương hiệu TQ có bán được sang PH không. Tìm kiếm nguồn hàng tương đương tại PH hoặc nhập từ TQ là bình thường.
+
+THÔNG SỐ SGI: hoàn 40%, ship J&T 69₱/đơn, COD GIP 1.5%, đóng gói 20₱. Tiêu chí WIN: Chi ads/Doanh thu ≤ 17%.
+
+THANG ĐIỂM — BẮT BUỘC cho điểm theo thang thực, không được để 0 trừ khi SP thực sự 0 điểm:
+LỚP 1 — 6 Tiêu chí vàng (tối đa 40đ, phải đạt ≥1 tiêu chí):
+  Đa năng đa dụng: đạt rõ +8, mờ +4, không có +0
+  Đẹp độc lạ/thời trang: đạt rõ +8, mờ +4, không có +0
+  Tính năng vượt trội: đạt rõ +8, mờ +4, không có +0
+  Tính năng mới/cải tiến: đạt rõ +8, mờ +4, không có +0
+  Giá rẻ 99-399₱: đạt rõ +8, mờ +4, không có +0
+  Trending/vụ mùa: đạt rõ +8, mờ +4, không có +0
+LỚP 2 — Fit thị trường PH (tối đa 30đ): Sức mua PH 0-10, Văn hoá/wow factor 0-10, Logistics (<2kg, không vỡ) 0-10.
+LỚP 3 — Tín hiệu thị trường (tối đa 30đ): SP tương tự bán Shopee/Lazada PH 0-10, Ads FB/Tiktok PH 0-10, Cạnh tranh vừa phải 0-10.
+
+VERDICT: PASS≥65, REVIEW 45-64, FAIL<45. Nếu L1=0 → tự động FAIL dù tổng cao.
+total = score_l1 + score_l2 + score_l3 (tính đúng, không để 0 nếu các thành phần > 0).
+
+Trả về JSON thuần không markdown, không text thừa:
+{"score_l1":0,"score_l2":0,"score_l3":0,"total":0,"verdict":"PASS|REVIEW|FAIL","recommendation":"<2 câu ngắn gọn>","margin_est":{"price_est":0,"cogs_est":0,"margin_note":"<1 câu>"}}`;
 
       const huitunCtx = [
         source      ? 'Ngành: '+source : '',
@@ -1105,22 +1195,30 @@ Trả về JSON thuần không markdown:
     document.getElementById('progress-text').textContent = `Đã chấm: ${completed}/${total}`;
   };
 
-  // Run with concurrency pool
+  // Run with concurrency pool — chỉ chạy toScoreFinal (đã dedup)
   const pool = [];
   let idx = 0;
   const runNext = async () => {
-    while (idx < toScore.length) {
-      const row = toScore[idx++];
+    while (idx < toScoreFinal.length) {
+      const row = toScoreFinal[idx++];
       await scoreRow(row);
     }
   };
   for (let w = 0; w < concurrency; w++) pool.push(runNext());
   await Promise.all(pool);
 
+  // Merge kết quả: SP đã chạy + SP đã skip từ history
+  batchResults = [...batchResults, ...skippedResults];
+
+  // Lưu kết quả mới vào history (chỉ SP vừa chạy, không lưu lại skipped)
+  saveBatchToHistory(batchResults.filter(r => !r._skipped));
+
   document.getElementById('progress-fill').style.width = '100%';
   document.getElementById('progress-pct').textContent = '100%';
   document.getElementById('progress-text').textContent = 'Hoàn thành!';
-  document.getElementById('progress-current').textContent = batchResults.length + ' sản phẩm đã được chấm điểm.';
+  const skippedNote = skippedResults.length > 0 ? ` (${skippedResults.length} bỏ qua từ lịch sử)` : '';
+  document.getElementById('progress-current').textContent =
+    batchResults.filter(r=>!r._skipped).length + ' SP chấm mới' + skippedNote + '. Tổng: ' + batchResults.length;
   document.getElementById('btn-batch-run').disabled = false;
 
   renderBatchResults('all');
@@ -1133,11 +1231,13 @@ function renderBatchResults(filter) {
   const counts = { PASS: 0, REVIEW: 0, FAIL: 0, ERROR: 0 };
   batchResults.forEach(r => { counts[r.verdict] = (counts[r.verdict]||0) + 1; });
 
+  const skippedCount = batchResults.filter(r => r._skipped).length;
   document.getElementById('batch-summary').innerHTML = `
     <div class="summary-card"><div class="summary-num">${batchResults.length}</div><div class="summary-label">Tổng SP</div></div>
     <div class="summary-card"><div class="summary-num" style="color:var(--green)">${counts.PASS||0}</div><div class="summary-label">PASS</div></div>
     <div class="summary-card"><div class="summary-num" style="color:var(--amber)">${counts.REVIEW||0}</div><div class="summary-label">REVIEW</div></div>
     <div class="summary-card"><div class="summary-num" style="color:var(--red)">${counts.FAIL||0}</div><div class="summary-label">FAIL</div></div>
+    ${skippedCount > 0 ? \`<div class="summary-card"><div class="summary-num" style="color:var(--text3)">\${skippedCount}</div><div class="summary-label">Từ lịch sử</div></div>\` : ''}
   `;
 
   let html = `<table class="batch-table">
@@ -1149,6 +1249,8 @@ function renderBatchResults(filter) {
 
   filtered.forEach((r, i) => {
     const vc = r.verdict.toLowerCase();
+    const skippedStyle = r._skipped ? 'opacity:0.6;font-style:italic;' : '';
+    const skippedTag = r._skipped ? ` <span style="font-family:var(--mono);font-size:9px;color:var(--text3);border:1px solid var(--border2);border-radius:3px;padding:1px 5px">history ${r._weeksAgo}w</span>` : '';
     const adsPctStr = r.adsPct !== null ? r.adsPct.toFixed(1)+'%' : '—';
     const adsPctColor = r.adsPct === null ? '' : r.adsPct >= 17 ? 'color:var(--green)' : r.adsPct >= 8 ? 'color:var(--amber)' : 'color:var(--red)';
     const affNum = parseFloat(r.affiliate);
@@ -1156,9 +1258,9 @@ function renderBatchResults(filter) {
     const commNum = parseFloat(String(r.commission).replace('%',''));
     const commColor = isNaN(commNum) ? '' : commNum >= 30 ? 'color:var(--green);font-weight:700' : commNum >= 10 ? 'color:var(--amber)' : '';
     const linkHtml = r.douyinLink ? `<a href="${r.douyinLink}" target="_blank" style="font-size:11px;color:var(--blue);text-decoration:none">Xem ↗</a>` : '—';
-    html += `<tr class="${vc}">
+    html += `<tr class="${vc}" style="${skippedStyle}">
       <td style="color:var(--text3)">${i+1}</td>
-      <td style="max-width:160px;word-break:break-word;font-weight:500">${r.sp}</td>
+      <td style="max-width:160px;word-break:break-word;font-weight:500">${r.sp}${skippedTag}</td>
       <td style="font-size:11px;color:var(--text3);max-width:80px;word-break:break-word">${r.source||'—'}</td>
       <td style="font-family:var(--mono);${affColor}">${r.affiliate||'—'}</td>
       <td style="font-family:var(--mono);${commColor}">${r.commission||'—'}</td>
