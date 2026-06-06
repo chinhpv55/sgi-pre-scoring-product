@@ -670,7 +670,7 @@ LỚP 3 — Tín hiệu thị trường (tối đa 30đ):
 - Ads tương tự chạy lâu FB/Tiktok PH (0–10đ)
 - Cạnh tranh vừa phải — có cầu, chưa bão hoà (0–10đ)
 
-VERDICT: PASS ≥65 | REVIEW 45–64 | FAIL <45. Nếu tất cả TC = 0 → FAIL.
+VERDICT: PASS ≥75 | REVIEW 55–74 | FAIL <55. Nếu tất cả TC = 0 → FAIL.
 FDA: Flag "Cần kiểm tra FDA" nếu SP thuộc nhóm thực phẩm, mỹ phẩm, dược phẩm, thiết bị y tế.
 
 Trả về JSON thuần, không markdown, không text thừa:
@@ -705,7 +705,7 @@ Trả về JSON thuần, không markdown, không text thừa:
 
     const total = result.total;
     document.getElementById('score-big').textContent = total;
-    const barColor = total >= 65 ? '#2D6A4F' : total >= 45 ? '#92400E' : '#991B1B';
+    const barColor = total >= 75 ? '#2D6A4F' : total >= 55 ? '#92400E' : '#991B1B';
     document.getElementById('main-bar').style.cssText = `width:${total}%;background:${barColor}`;
     document.getElementById('score-tc1').textContent = result.tc1||0;
     document.getElementById('score-tc2').textContent = result.tc2||0;
@@ -1085,6 +1085,8 @@ async function runBatch() {
     if (!sp.trim()) return false;
     if (filterDigi && digiKw.some(k => sp.includes(k))) return false;
     if (bigBrands.some(k => sp.includes(k))) return false;
+    const qtyRaw = !isNaN(cols.qtyIdx) ? String(row[cols.qtyIdx]||'').trim() : '';
+    if (qtyRaw === '0-250' || qtyRaw === '0~250') return false;
     if (filterSignal) {
       const aff  = parseFloat(row[affiliateIdx]) || 0;
       const comm = parseFloat(String(row[commIdx] || '').replace('%','')) || 0;
@@ -1166,7 +1168,7 @@ TC6 Trending/vụ mùa (tối đa 12đ): Đang viral trên Douyin hoặc phù h�
 
 FDA: Flag "Cần kiểm tra FDA" nếu SP là thực phẩm, thực phẩm chức năng, mỹ phẩm, dược phẩm, thiết bị y tế. Ngược lại ghi "OK".
 
-VERDICT: PASS ≥65 | REVIEW 45–64 | FAIL <45. Nếu tất cả TC = 0 → FAIL.
+VERDICT: PASS ≥75 | REVIEW 55–74 | FAIL <55. Nếu tất cả TC = 0 → FAIL.
 total = tc1+tc2+tc3+tc4+tc5+tc6 (tính đúng).
 
 Trả về JSON thuần không markdown, không text thừa:
@@ -1382,9 +1384,9 @@ function exportBatchXLSX() {
     ['SGI Product Scoring', ''],
     ['Tuần', new Date().toLocaleDateString('vi-VN')],
     ['Tổng SP', batchResults.length],
-    ['PASS ≥65đ', counts.PASS],
-    ['REVIEW 45-64đ', counts.REVIEW],
-    ['FAIL <45đ', counts.FAIL],
+    ['PASS ≥75đ', counts.PASS],
+    ['REVIEW 55-74đ', counts.REVIEW],
+    ['FAIL <55đ', counts.FAIL],
     ['', ''],
     ['Tham số SGI', ''],
     ['Tỷ lệ hoàn', '40%'],
