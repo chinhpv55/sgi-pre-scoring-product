@@ -301,7 +301,7 @@
           </div>
           <div class="layer-row">
             <span class="layer-tag" style="background:var(--amber-bg);color:var(--amber)">TC5</span>
-            <span class="layer-name">Hàng giá rẻ 99–399₱</span>
+            <span class="layer-name">Hàng giá rẻ (Douyin ≤100 tệ)</span>
             <div class="mini-bar-bg"><div class="mini-bar-fill" id="bar-tc5" style="width:0%;background:#92400E"></div></div>
             <span class="layer-score" id="score-tc5">—</span>
             <span class="layer-max">/ 16</span>
@@ -378,7 +378,7 @@
             <select id="map-commission"><option value="">— không có —</option></select>
           </div>
           <div>
-            <label>Cột Doanh số (商品销量)</label>
+            <label>Cột Số đơn hàng (商品销量)</label>
             <select id="map-qty"><option value="">— không có —</option></select>
           </div>
           <div>
@@ -657,7 +657,7 @@ LỚP 1 — 6 Tiêu chí vàng (tối đa 40đ). Phải đạt ÍT NHẤT 1. Đ�
 2. Đẹp độc lạ (thị giác, thời trang, phụ kiện làm đẹp)
 3. Tính năng vượt trội (giải quyết vấn đề SP khác không làm được)
 4. Tính năng mới (cải tiến so với cùng loại trên thị trường)
-5. Hàng giá rẻ (99–399 peso, combo nhiều món, margin tốt)
+5. Hàng giá rẻ — Giá bán Douyin ≤50 tệ: +8đ. 51–100 tệ: +4đ. >100 tệ hoặc không rõ: +0đ. (Proxy cho giá nhập 1688 ≤20 tệ)
 6. Trending/vụ mùa (đang hot, lễ hội, văn hoá tiêu dùng PH)
 
 LỚP 2 — Fit thị trường PH (tối đa 30đ):
@@ -900,12 +900,13 @@ function autoDetectCols() {
     sourceIdx:     find(['_source','类目','category','nguồn','source','ngành']),
     affiliateIdx:  find(['关联达人','affiliate','达人']),
     commIdx:       find(['佣金率','hoa hồng','commission','comm']),
-    qtyIdx:        find(['商品销量','视频销量','销量','lượng bán','quantity','qty','doanh số']),
+    qtyIdx:        find(['商品销量','视频销量','销量','lượng bán','quantity','qty','doanh số','số đơn']),
     videoIdx:      find(['视频数','video数','video count','video']),
     liveIdx:       find(['直播数','live数','livestream','live count']),
     linkIdx:       find(['商品链接','抖音详情页','link','url','链接']),
     cogsVndIdx:    find(['giá vốn','cost vnd','cogs vnd','giá nhập']),
     priceIdx:      find(['giá bán','price','peso','selling']),
+    douyinPriceIdx: find(['商品价格','价格','售价','参考价','douyin price','giá douyin','giá bán douyin','giá tệ']),
   };
 }
 
@@ -1059,7 +1060,7 @@ function saveBatchToHistory(results) {
 
 async function runBatch() {
   const cols = window._detectedCols || autoDetectCols();
-  const { nameIdx, sourceIdx, affiliateIdx, commIdx, qtyIdx, videoIdx, liveIdx, linkIdx, cogsVndIdx, priceIdx } = cols;
+  const { nameIdx, sourceIdx, affiliateIdx, commIdx, qtyIdx, videoIdx, liveIdx, linkIdx, cogsVndIdx, priceIdx, douyinPriceIdx } = cols;
   if (isNaN(nameIdx)) { alert('Không tìm thấy cột Tên sản phẩm — kiểm tra lại file.'); return; }
 
   // Pre-filter
@@ -1136,6 +1137,7 @@ async function runBatch() {
     const douyinLink= !isNaN(linkIdx)      ? (row[linkIdx]      || '') : '';
     const videoCount = !isNaN(videoIdx)     ? (row[videoIdx]     || '') : '';
     const liveCount  = !isNaN(liveIdx)      ? (row[liveIdx]      || '') : '';
+    const douyinPriceTey = !isNaN(douyinPriceIdx) ? (row[douyinPriceIdx] || '') : '';
 
     document.getElementById('progress-current').textContent = 'SP: ' + sp.substring(0, 60);
 
@@ -1149,7 +1151,7 @@ TC1 Đa năng đa dụng (tối đa 22đ): SP có 3in1, 4in1, dùng được nhi
 TC2 Đẹp độc lạ (tối đa 18đ): Thị giác ấn tượng, thời trang, độc lạ trên video. Đạt rõ +18, mờ +9, không +0.
 TC3 Tính năng vượt trội (tối đa 20đ): Giải quyết vấn đề mà SP khác không làm được. Đạt rõ +20, mờ +10, không +0.
 TC4 Tính năng mới/cải tiến (tối đa 12đ): Cải tiến rõ so với SP cùng loại. Đạt rõ +12, mờ +6, không +0.
-TC5 Hàng giá rẻ 99–399₱ (tối đa 16đ): Giá nhập TQ thấp, bán được 99–399₱ tại PH. Đạt rõ +16, mờ +8, không +0.
+TC5 Hàng giá rẻ (tối đa 16đ): Dựa vào giá bán Douyin được cung cấp. Giá bán Douyin ≤50 tệ → đạt rõ +16 (giá nhập 1688 thường ≤15 tệ). Giá bán Douyin 51–100 tệ → mờ +8 (giá nhập ~15–25 tệ, cần xác nhận). Giá bán Douyin >100 tệ hoặc không có thông tin giá → +0.
 TC6 Trending/vụ mùa (tối đa 12đ): Đang viral trên Douyin hoặc phù hợp vụ mùa sắp tới. Đạt rõ +12, mờ +6, không +0.
 
 FDA: Flag "Cần kiểm tra FDA" nếu SP là thực phẩm, thực phẩm chức năng, mỹ phẩm, dược phẩm, thiết bị y tế. Ngược lại ghi "OK".
@@ -1161,12 +1163,13 @@ Trả về JSON thuần không markdown, không text thừa:
 {"tc1":0,"tc2":0,"tc3":0,"tc4":0,"tc5":0,"tc6":0,"total":0,"verdict":"PASS|REVIEW|FAIL","name_vi":"<tên SP tiếng Việt 5-10 từ>","fda":"OK|Cần kiểm tra FDA","recommendation":"<2 câu ngắn gọn>"}`;
 
       const huitunCtx = [
-        source      ? 'Ngành: '+source : '',
-        affiliate   ? 'KOC: '+affiliate+' người' : '',
-        commission  ? 'Hoa hồng: '+commission : '',
-        qty         ? 'Doanh số: '+qty : '',
-        videoCount  ? 'Video: '+videoCount : '',
-        liveCount   ? 'Livestream: '+liveCount : '',
+        source           ? 'Ngành: '+source : '',
+        affiliate        ? 'KOC: '+affiliate+' người' : '',
+        commission       ? 'Hoa hồng: '+commission : '',
+        douyinPriceTey   ? 'Giá bán Douyin: '+douyinPriceTey+' tệ' : '',
+        qty              ? 'Số đơn: '+qty : '',
+        videoCount       ? 'Video: '+videoCount : '',
+        liveCount        ? 'Livestream: '+liveCount : '',
       ].filter(Boolean).join(' | ');
       const spShort = sp.length > 120 ? sp.substring(0, 120) : sp;
       const userMsg = `SP: ${spShort}${huitunCtx ? ' | '+huitunCtx : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
@@ -1309,7 +1312,7 @@ function filterBatch(f) { renderBatchResults(f); }
 
 
 function exportBatchXLSX() {
-  const headers = ['STT','Tên SP (TQ)','Tên SP (VN)','Ngành','KOC (người)','Hoa hồng (%)','Doanh số (Tệ)','Video','Live','Verdict','Tổng điểm /100','TC1 Đa năng /22','TC2 Đẹp /18','TC3 Vượt trội /20','TC4 Mới /12','TC5 Giá rẻ /16','TC6 Trending /12','FDA?','Link','Khuyến nghị'];
+  const headers = ['STT','Tên SP (TQ)','Tên SP (VN)','Ngành','KOC (người)','Hoa hồng (%)','Số đơn hàng','Video','Live','Verdict','Tổng điểm /100','TC1 Đa năng /22','TC2 Đẹp /18','TC3 Vượt trội /20','TC4 Mới /12','TC5 Giá rẻ /16','TC6 Trending /12','FDA?','Link','Khuyến nghị'];
   const rows = batchResults.map((r, i) => [
     i+1, r.sp, r.nameVi||'', r.source||'', r.affiliate||'', r.commission||'', r.qty||'',
     r.videoCount||'', r.liveCount||'',
