@@ -860,6 +860,7 @@ function handleFiles(fileList) {
 function detectFileType(headers) {
   const h = headers.map(x => String(x));
   if (h.some(x => x.includes('视频销量') || x.includes('佣金比例') || x.includes('抖音详情页'))) return 'video';
+  if (h.some(x => x.includes('直播销量') || x.includes('直播销售额'))) return 'live';
   return 'sales';
 }
 
@@ -875,6 +876,15 @@ function normalizeRow(row, headers, fileType) {
     get(['佣金比例','佣金率']),
     get(['视频销量']),
     get(['抖音详情页','商品链接']),
+    '', ''
+  ];
+  if (fileType === 'live') return [
+    get(['商品名称']),
+    '直播榜',
+    get(['关联达人','达人数']),
+    get(['佣金率','佣金比例']),
+    get(['直播销量','商品销量']),
+    get(['商品链接','抖音详情页']),
     '', ''
   ];
   return [
