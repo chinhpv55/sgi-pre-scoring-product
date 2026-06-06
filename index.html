@@ -445,7 +445,7 @@
     <div id="history-content"></div>
   </div>
 
-  <div class="footer">SGI Holding · Trading PH · Product Scoring Tool v5.0 · Huitun XLSX · Hoàn 40% · Ship J&T 69₱ · COD GIP 1.5% · WIN ≤17%</div>
+  <div class="footer">SGI Holding · Trading PH · Product Scoring Tool v5.1 · PASS ≥75 · Drop: 0-250 & ≥2.5w đơn · Hoàn 40% · Ship J&T 69₱ · COD GIP 1.5% · WIN ≤17%</div>
 </div>
 
 <script>
@@ -1087,6 +1087,8 @@ async function runBatch() {
     if (bigBrands.some(k => sp.includes(k))) return false;
     const qtyRaw = !isNaN(cols.qtyIdx) ? String(row[cols.qtyIdx]||'').trim() : '';
     if (qtyRaw === '0-250' || qtyRaw === '0~250') return false;
+    const highQty = ['2.5w-5w','5w-10w','10w+','100w+','10w-25w','25w-50w','50w-100w','2.5w~5w','5w~10w'];
+    if (highQty.some(h => qtyRaw.includes(h) || qtyRaw === h)) return false;
     if (filterSignal) {
       const aff  = parseFloat(row[affiliateIdx]) || 0;
       const comm = parseFloat(String(row[commIdx] || '').replace('%','')) || 0;
