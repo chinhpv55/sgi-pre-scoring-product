@@ -680,7 +680,7 @@ Trả về JSON thuần, không markdown, không text thừa:
   const userMsg = `Sản phẩm: ${sp}${source ? '\nNguồn: ' + source : ''}${hasMargin ? `\nGiá bán: ${price} peso\nGiá vốn: ${cogs} peso` : '\n(Không có giá — tự ước tính theo loại SP và thị trường PH)'}`;
 
   try {
-    const res = await fetch('https://sgi-claude-proxy.chinhpv.workers.dev/', {
+    const res = await fetch('https://go.sgiholding.com.vn/webhook/claude-proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 1200, system, messages: [{ role: 'user', content: userMsg }] })
@@ -1188,7 +1188,7 @@ Trả về JSON thuần không markdown, không text thừa:
       const spShort = sp.length > 120 ? sp.substring(0, 120) : sp;
       const userMsg = `SP: ${spShort}${huitunCtx ? ' | '+huitunCtx : ''}${!isNaN(price) ? ' | Giá bán: '+price+'₱' : ''}${!isNaN(cogsPeso) ? ' | Giá vốn: '+cogsPeso+'₱' : ''}`;
 
-      const res = await fetch('https://sgi-claude-proxy.chinhpv.workers.dev/', {
+      const res = await fetch('https://go.sgiholding.com.vn/webhook/claude-proxy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 900, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
